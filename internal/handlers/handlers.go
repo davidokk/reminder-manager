@@ -2,18 +2,13 @@ package handlers
 
 import (
 	"fmt"
+	"reminder-manager/internal/commander"
 	"reminder-manager/internal/storage"
 	"reminder-manager/utils"
 	"strconv"
 	"strings"
 	"time"
 )
-
-type Handler func(string) string
-
-var List map[string]Handler
-
-var help string
 
 const (
 	helpCommand           = "help"
@@ -34,26 +29,28 @@ var description = map[string]string{
 	editCommand:           "[id] [new text] changes the reminder text",
 	todayCommand:          "shows today's activities",
 	forDaysCommand:        "[count] shows records for next 'count' days",
-
-	helpCommand: "show this menu",
-}
-
-func init() {
-	List = make(map[string]Handler)
-	List[listCommand] = listFunc
-	List[addCommand] = addFunc
-	List[removeOutdatedCommand] = removeOutdatedFunc
-	List[removeByIdCommand] = removeByIdFunc
-	List[editCommand] = editFunc
-	List[todayCommand] = todayFunc
-	List[forDaysCommand] = forDaysFunc
-
-	List[helpCommand] = helpFunc
-	genHelpMenu()
+	helpCommand:           "show this menu",
 }
 
 const BadArgumentResponse = "Bad argument, try one more time"
 const SuccessResponse = "Success! =)"
+
+func AddHandlers(cmd *commander.Commander) {
+	cmd.RegisterHandler(listCommand, listFunc)
+	cmd.RegisterHandler(addCommand, addFunc)
+	cmd.RegisterHandler(removeOutdatedCommand, removeOutdatedFunc)
+	cmd.RegisterHandler(removeByIdCommand, removeByIdFunc)
+	cmd.RegisterHandler(editCommand, editFunc)
+	cmd.RegisterHandler(todayCommand, todayFunc)
+	cmd.RegisterHandler(forDaysCommand, forDaysFunc)
+
+	var help string
+	for name, desc := range description {
+		help += fmt.Sprintf("/%s %s\n", name, desc)
+	}
+
+	cmd.RegisterHandler(helpCommand, func(string) string { return help })
+}
 
 func forDaysFunc(param string) string {
 	cnt, err := strconv.Atoi(param)
@@ -150,14 +147,4 @@ func addFunc(str string) string {
 	}
 	storage.Add(storage.NewReminder(strings.Join(params[1:], " "), date))
 	return SuccessResponse
-}
-
-func helpFunc(string) string {
-	return help
-}
-
-func genHelpMenu() {
-	for name, desc := range description {
-		help += fmt.Sprintf("/%s %s\n", name, desc)
-	}
 }

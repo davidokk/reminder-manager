@@ -2,7 +2,6 @@ package commander
 
 import (
 	"log"
-	"reminder-manager/internal/handlers"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/pkg/errors"
@@ -10,8 +9,11 @@ import (
 	"reminder-manager/config"
 )
 
+type Handler func(string) string
+
 type Commander struct {
-	bot *tgbotapi.BotAPI
+	bot      *tgbotapi.BotAPI
+	handlers map[string]Handler
 }
 
 func Init() (*Commander, error) {
@@ -20,11 +22,12 @@ func Init() (*Commander, error) {
 		return nil, errors.Wrap(err, "init tgbot")
 	}
 
-	bot.Debug = true
+	//bot.Debug = true
 	log.Printf("Authorized on account %s", bot.Self.UserName)
 
 	return &Commander{
-		bot: bot,
+		bot:      bot,
+		handlers: make(map[string]Handler),
 	}, nil
 }
 
@@ -37,16 +40,18 @@ func (cmd *Commander) Run() error {
 	for update := range updates {
 		if update.Message != nil {
 			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "")
+			log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
+
 			if cmdName := update.Message.Command(); cmdName != "" {
-				if handler, ok := handlers.List[cmdName]; ok {
+				if handler, ok := cmd.handlers[cmdName]; ok {
 					msg.Text = handler(update.Message.CommandArguments())
 				} else {
 					msg.Text = "Unknown command. Type /help to see the list"
 				}
 			} else {
-				log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
 				msg.Text = "I can only follow commands. Type /help to see the list"
 			}
+
 			_, err := cmd.bot.Send(msg)
 			if err != nil {
 				return errors.Wrap(err, "send tg message")
@@ -54,5 +59,13 @@ func (cmd *Commander) Run() error {
 		}
 	}
 
+	return nil
+}
+
+func (cmd *Commander) RegisterHandler(name string, handler Handler) error {
+	if _, ok := cmd.handlers[name]; ok {
+		return errors.New("add handler with existing name")
+	}
+	cmd.handlers[name] = handler
 	return nil
 }
