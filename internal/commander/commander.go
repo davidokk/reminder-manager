@@ -31,6 +31,9 @@ func Init() (*Commander, error) {
 	}, nil
 }
 
+const UnknownCommandResponse = "Unknown command. Type /help to see the list"
+const DefaultResponse = "I can only follow commands. Type /help to see the list"
+
 func (cmd *Commander) Run() error {
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
@@ -46,10 +49,10 @@ func (cmd *Commander) Run() error {
 				if handler, ok := cmd.handlers[cmdName]; ok {
 					msg.Text = handler(update.Message.CommandArguments())
 				} else {
-					msg.Text = "Unknown command. Type /help to see the list"
+					msg.Text = UnknownCommandResponse
 				}
 			} else {
-				msg.Text = "I can only follow commands. Type /help to see the list"
+				msg.Text = DefaultResponse
 			}
 
 			_, err := cmd.bot.Send(msg)

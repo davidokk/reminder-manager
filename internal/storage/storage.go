@@ -10,11 +10,17 @@ import (
 
 var data []*Reminder
 
+var IdNotExistsError = errors.New("given id doesn't exist")
+var IdAlreadyExistsError = errors.New("given id already exist")
+
 func init() {
 	data = make([]*Reminder, 0)
 }
 
-func Add(rem *Reminder) {
+func Add(rem *Reminder) error {
+	if _, err := indexById(rem.Id); err == nil {
+		return IdAlreadyExistsError
+	}
 	index := sort.Search(len(data), func(i int) bool {
 		return rem.Date.Before(data[i].Date)
 	})
@@ -23,6 +29,7 @@ func Add(rem *Reminder) {
 	for i := index; i < len(data); i++ {
 		swap(i, len(data)-1)
 	}
+	return nil
 }
 
 func RemindersForDays(count int) []*Reminder {
@@ -37,7 +44,7 @@ func RemindersForDays(count int) []*Reminder {
 		border := utils.UpToDay(time.Now()).Add(24*time.Hour*time.Duration(count) - time.Millisecond)
 		return data[i].Date.After(border)
 	})
-	if l == len(data) || l == r {
+	if l == r {
 		return nil
 	}
 	res := make([]*Reminder, r-l)
@@ -69,23 +76,21 @@ func OutdatedCount() (cnt int) {
 	return cnt
 }
 
-func RemoveById(id uint64) bool {
+func RemoveById(id uint64) error {
 	index, err := indexById(id)
 	if err == nil {
 		copy(data[index:], data[index+1:])
 		data = data[:len(data)-1]
-		return true
 	}
-	return false
+	return err
 }
 
-func Edit(id uint64, newText string) bool {
+func Edit(id uint64, newText string) error {
 	index, err := indexById(id)
 	if err == nil {
 		data[index].What = newText
-		return true
 	}
-	return false
+	return err
 }
 
 func indexById(id uint64) (int, error) {
@@ -94,7 +99,7 @@ func indexById(id uint64) (int, error) {
 			return i, nil
 		}
 	}
-	return -1, errors.New("no such id")
+	return -1, IdNotExistsError
 }
 
 func Data() []*Reminder {

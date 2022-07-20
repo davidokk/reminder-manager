@@ -19,5 +19,4 @@ func main() {
 	if err := cmd.Run(); err != nil {
 		log.Panic(err)
 	}
-
 }

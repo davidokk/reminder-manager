@@ -80,10 +80,10 @@ func editFunc(str string) string {
 	if err != nil || len(params) < 2 {
 		return BadArgumentResponse
 	}
-	if storage.Edit(id, strings.Join(params[1:], " ")) {
+	if err := storage.Edit(id, strings.Join(params[1:], " ")); err == nil {
 		return SuccessResponse
 	} else {
-		return "I can't find this id"
+		return err.Error()
 	}
 }
 
@@ -92,10 +92,10 @@ func removeByIdFunc(params string) string {
 	if err != nil {
 		return BadArgumentResponse
 	}
-	if storage.RemoveById(id) {
+	if err := storage.RemoveById(id); err == nil {
 		return SuccessResponse
 	} else {
-		return "I can't find this id"
+		return err.Error()
 	}
 }
 
@@ -120,7 +120,7 @@ func listFunc(string) string {
 		outdated += "There are outdated entries on your list\n\n"
 		outdated += strings.Join(res[:oldCount], "\n")
 	}
-	if len(res)-int(oldCount) > 0 {
+	if len(res)-oldCount > 0 {
 		actual += "Your actual plans\n\n"
 		actual += strings.Join(res[oldCount:], "\n")
 	}
@@ -140,11 +140,13 @@ func addFunc(str string) string {
 		date = utils.UpToDay(time.Now()).Add(time.Hour * 24)
 	} else {
 		var err error
-		date, err = time.Parse("02.01.06", strings.TrimSpace(params[0]))
+		date, err = time.Parse("02.01.06", params[0])
 		if err != nil || len(params) < 2 {
 			return BadArgumentResponse
 		}
 	}
-	storage.Add(storage.NewReminder(strings.Join(params[1:], " "), date))
+	if err := storage.Add(storage.NewReminder(strings.Join(params[1:], " "), date)); err != nil {
+		return err.Error()
+	}
 	return SuccessResponse
 }
