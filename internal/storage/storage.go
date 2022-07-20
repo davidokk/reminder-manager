@@ -17,13 +17,18 @@ func init() {
 	data = make([]*Reminder, 0)
 }
 
+// returns index of min date after or equal to given
+func firstAfterOrEqual(date time.Time) int {
+	return sort.Search(len(data), func(i int) bool {
+		return data[i].Date.After(date) || data[i].Date.Equal(date)
+	})
+}
+
 func Add(rem *Reminder) error {
 	if _, err := indexById(rem.Id); err == nil {
 		return IdAlreadyExistsError
 	}
-	index := sort.Search(len(data), func(i int) bool {
-		return rem.Date.Before(data[i].Date)
-	})
+	index := firstAfterOrEqual(rem.Date)
 	data = append(data, rem)
 	swap := reflect.Swapper(data)
 	for i := index; i < len(data); i++ {
@@ -36,14 +41,8 @@ func RemindersForDays(count int) []*Reminder {
 	if count < 1 {
 		return nil
 	}
-	l := sort.Search(len(data), func(i int) bool {
-		today := utils.UpToDay(time.Now()).Add(-time.Millisecond)
-		return data[i].Date.After(today)
-	})
-	r := sort.Search(len(data), func(i int) bool {
-		border := utils.UpToDay(time.Now()).Add(24*time.Hour*time.Duration(count) - time.Millisecond)
-		return data[i].Date.After(border)
-	})
+	l := firstAfterOrEqual(utils.UpToDay(time.Now()))
+	r := firstAfterOrEqual(utils.UpToDay(time.Now()).Add(24 * time.Hour * time.Duration(count)))
 	if l == r {
 		return nil
 	}
@@ -70,10 +69,7 @@ func RemoveOutdated() int {
 }
 
 func OutdatedCount() (cnt int) {
-	for i := 0; i < len(data) && data[i].Date.Before(utils.UpToDay(time.Now())); i++ {
-		cnt++
-	}
-	return cnt
+	return firstAfterOrEqual(utils.UpToDay(time.Now()))
 }
 
 func RemoveById(id uint64) error {
