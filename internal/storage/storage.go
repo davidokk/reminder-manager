@@ -2,7 +2,6 @@ package storage
 
 import (
 	"errors"
-	"reflect"
 	"reminder-manager/utils"
 	"sort"
 	"time"
@@ -29,11 +28,7 @@ func Add(rem *Reminder) error {
 		return IdAlreadyExistsError
 	}
 	index := firstAfterOrEqual(rem.Date)
-	data = append(data, rem)
-	swap := reflect.Swapper(data)
-	for i := index; i < len(data); i++ {
-		swap(i, len(data)-1)
-	}
+	data = utils.Insert(data, rem, index)
 	return nil
 }
 
@@ -46,9 +41,7 @@ func RemindersForDays(count int) []*Reminder {
 	if l == r {
 		return nil
 	}
-	res := make([]*Reminder, r-l)
-	copy(res, data[l:r])
-	return res
+	return utils.Clone(data[l:r])
 }
 
 func AsStrings(rem []*Reminder) []string {
@@ -75,8 +68,7 @@ func OutdatedCount() (cnt int) {
 func RemoveById(id uint64) error {
 	index, err := indexById(id)
 	if err == nil {
-		copy(data[index:], data[index+1:])
-		data = data[:len(data)-1]
+		data = utils.Remove(data, index)
 	}
 	return err
 }
@@ -99,7 +91,5 @@ func indexById(id uint64) (int, error) {
 }
 
 func Data() []*Reminder {
-	res := make([]*Reminder, len(data))
-	copy(res, data)
-	return res
+	return utils.Clone(data)
 }
