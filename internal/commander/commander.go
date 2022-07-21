@@ -5,8 +5,6 @@ import (
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/pkg/errors"
-
-	"reminder-manager/config"
 )
 
 type Handler func(string) string
@@ -16,13 +14,12 @@ type Commander struct {
 	handlers map[string]Handler
 }
 
-func Init() (*Commander, error) {
-	bot, err := tgbotapi.NewBotAPI(config.ApiKey)
+func Init(apiKey string) (*Commander, error) {
+	bot, err := tgbotapi.NewBotAPI(apiKey)
 	if err != nil {
 		return nil, errors.Wrap(err, "init tgbot")
 	}
 
-	//bot.Debug = true
 	log.Printf("Authorized on account %s", bot.Self.UserName)
 
 	return &Commander{
@@ -34,9 +31,12 @@ func Init() (*Commander, error) {
 const UnknownCommandResponse = "Unknown command. Type /help to see the list"
 const DefaultResponse = "I can only follow commands. Type /help to see the list"
 
+const BotDefaultOffset = 0
+const BotDefaultTimeout = 60
+
 func (cmd *Commander) Run() error {
-	u := tgbotapi.NewUpdate(0)
-	u.Timeout = 60
+	u := tgbotapi.NewUpdate(BotDefaultOffset)
+	u.Timeout = BotDefaultTimeout
 
 	updates := cmd.bot.GetUpdatesChan(u)
 
@@ -65,10 +65,9 @@ func (cmd *Commander) Run() error {
 	return nil
 }
 
-func (cmd *Commander) RegisterHandler(name string, handler Handler) error {
+func (cmd *Commander) RegisterHandler(name string, handler Handler) {
 	if _, ok := cmd.handlers[name]; ok {
-		return errors.New("add handler with existing name")
+		log.Println(errors.New("add handler with existing name"))
 	}
 	cmd.handlers[name] = handler
-	return nil
 }

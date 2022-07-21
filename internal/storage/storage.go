@@ -2,9 +2,10 @@ package storage
 
 import (
 	"errors"
-	"reminder-manager/utils"
 	"sort"
 	"time"
+
+	"gitlab.ozon.dev/davidokk/reminder-manager/utils"
 )
 
 var data []*Reminder
@@ -24,7 +25,7 @@ func firstAfterOrEqual(date time.Time) int {
 }
 
 func Add(rem *Reminder) error {
-	if _, err := indexById(rem.Id); err == nil {
+	if _, err := indexById(rem.ID); err == nil {
 		return IdAlreadyExistsError
 	}
 	index := firstAfterOrEqual(rem.Date)
@@ -83,7 +84,7 @@ func Edit(id uint64, newText string) error {
 
 func indexById(id uint64) (int, error) {
 	for i, cur := range data {
-		if cur.Id == id {
+		if cur.ID == id {
 			return i, nil
 		}
 	}

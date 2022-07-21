@@ -5,18 +5,18 @@ import (
 	"time"
 )
 
-var lastId uint64 = 0
+var lastID uint64
 
 type Reminder struct {
-	Id   uint64
+	ID   uint64
 	What string
 	Date time.Time
 }
 
 func NewReminder(what string, date time.Time) *Reminder {
-	lastId++
+	lastID++
 	return &Reminder{
-		Id:   lastId,
+		ID:   lastID,
 		What: what,
 		Date: date,
 	}
@@ -24,5 +24,5 @@ func NewReminder(what string, date time.Time) *Reminder {
 
 func (rem *Reminder) ToString() string {
 	date := rem.Date.Format("Mon, 2 Jan")
-	return fmt.Sprintf("[%d]: %s - %s", rem.Id, date, rem.What)
+	return fmt.Sprintf("[%d]: %s - %s", rem.ID, date, rem.What)
 }

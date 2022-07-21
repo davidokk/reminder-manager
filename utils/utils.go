@@ -20,14 +20,11 @@ func Insert[T any](data []T, el T, idx int) []T {
 
 func Remove[T any](data []T, idx int) []T {
 	copy(data[idx:], data[idx+1:])
-	data = data[:len(data)-1]
-	return data
+	return data[:len(data)-1]
 }
 
 func Clone[T any](data []T) []T {
 	res := make([]T, 0, len(data))
-	for _, el := range data {
-		res = append(res, el)
-	}
+	res = append(res, data...)
 	return res
 }

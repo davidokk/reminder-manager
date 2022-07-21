@@ -2,12 +2,13 @@ package handlers
 
 import (
 	"fmt"
-	"reminder-manager/internal/commander"
-	"reminder-manager/internal/storage"
-	"reminder-manager/utils"
 	"strconv"
 	"strings"
 	"time"
+
+	"gitlab.ozon.dev/davidokk/reminder-manager/internal/commander"
+	"gitlab.ozon.dev/davidokk/reminder-manager/internal/storage"
+	"gitlab.ozon.dev/davidokk/reminder-manager/utils"
 )
 
 const (
@@ -60,18 +61,16 @@ func forDaysFunc(param string) string {
 	rem := storage.AsStrings(storage.RemindersForDays(cnt))
 	if rem == nil {
 		return fmt.Sprintf("Nothing to do next %d days =(", cnt)
-	} else {
-		return fmt.Sprintf("%d things to do next %d days\n\n%s", len(rem), cnt, strings.Join(rem, "\n"))
 	}
+	return fmt.Sprintf("%d things to do next %d days\n\n%s", len(rem), cnt, strings.Join(rem, "\n"))
 }
 
 func todayFunc(string) string {
 	rem := storage.AsStrings(storage.RemindersForDays(1))
 	if rem == nil {
 		return "Nothing to do today =("
-	} else {
-		return fmt.Sprintf("%d things to do today\n\n%s", len(rem), strings.Join(rem, "\n"))
 	}
+	return fmt.Sprintf("%d things to do today\n\n%s", len(rem), strings.Join(rem, "\n"))
 }
 
 func editFunc(str string) string {
@@ -80,11 +79,10 @@ func editFunc(str string) string {
 	if err != nil || len(params) < 2 {
 		return BadArgumentResponse
 	}
-	if err := storage.Edit(id, strings.Join(params[1:], " ")); err == nil {
-		return SuccessResponse
-	} else {
+	if err := storage.Edit(id, strings.Join(params[1:], " ")); err != nil {
 		return err.Error()
 	}
+	return SuccessResponse
 }
 
 func removeByIdFunc(params string) string {
@@ -92,20 +90,18 @@ func removeByIdFunc(params string) string {
 	if err != nil {
 		return BadArgumentResponse
 	}
-	if err := storage.RemoveById(id); err == nil {
-		return SuccessResponse
-	} else {
+	if err := storage.RemoveById(id); err != nil {
 		return err.Error()
 	}
+	return SuccessResponse
 }
 
 func removeOutdatedFunc(string) string {
 	outdated := storage.RemoveOutdated()
 	if outdated == 0 {
 		return "There aren't outdated records"
-	} else {
-		return fmt.Sprintf("%d records were deleted", outdated)
 	}
+	return fmt.Sprintf("%d records were deleted", outdated)
 }
 
 func listFunc(string) string {
@@ -124,11 +120,11 @@ func listFunc(string) string {
 		actual += "Your actual plans\n\n"
 		actual += strings.Join(res[oldCount:], "\n")
 	}
+	var sep string
 	if len(outdated) != 0 && len(actual) != 0 {
-		return outdated + "\n\n" + actual
-	} else {
-		return outdated + actual
+		sep = "\n\n"
 	}
+	return outdated + sep + actual
 }
 
 func addFunc(str string) string {
