@@ -7,13 +7,16 @@ import (
 	"github.com/pkg/errors"
 )
 
+// Handler represents the telegram bot command handler function
 type Handler func(string) string
 
+// Commander allows you to initialize and run the telegram bot
 type Commander struct {
 	bot      *tgbotapi.BotAPI
 	handlers map[string]Handler
 }
 
+// Init connects to the bot with the given key
 func Init(apiKey string) (*Commander, error) {
 	bot, err := tgbotapi.NewBotAPI(apiKey)
 	if err != nil {
@@ -28,15 +31,16 @@ func Init(apiKey string) (*Commander, error) {
 	}, nil
 }
 
-const UnknownCommandResponse = "Unknown command. Type /help to see the list"
-const DefaultResponse = "I can only follow commands. Type /help to see the list"
+const unknownCommandResponse = "Unknown command. Type /help to see the list"
+const defaultResponse = "I can only follow commands. Type /help to see the list"
 
-const BotDefaultOffset = 0
-const BotDefaultTimeout = 60
+const botDefaultOffset = 0
+const botDefaultTimeout = 60
 
+// Run launch telegram bot
 func (cmd *Commander) Run() error {
-	u := tgbotapi.NewUpdate(BotDefaultOffset)
-	u.Timeout = BotDefaultTimeout
+	u := tgbotapi.NewUpdate(botDefaultOffset)
+	u.Timeout = botDefaultTimeout
 
 	updates := cmd.bot.GetUpdatesChan(u)
 
@@ -49,10 +53,10 @@ func (cmd *Commander) Run() error {
 				if handler, ok := cmd.handlers[cmdName]; ok {
 					msg.Text = handler(update.Message.CommandArguments())
 				} else {
-					msg.Text = UnknownCommandResponse
+					msg.Text = unknownCommandResponse
 				}
 			} else {
-				msg.Text = DefaultResponse
+				msg.Text = defaultResponse
 			}
 
 			_, err := cmd.bot.Send(msg)
@@ -65,6 +69,7 @@ func (cmd *Commander) Run() error {
 	return nil
 }
 
+// RegisterHandler adds a new Handler into Commander
 func (cmd *Commander) RegisterHandler(name string, handler Handler) {
 	if _, ok := cmd.handlers[name]; ok {
 		log.Println(errors.New("add handler with existing name"))

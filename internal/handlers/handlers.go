@@ -33,9 +33,10 @@ var description = map[string]string{
 	helpCommand:           "show this menu",
 }
 
-const BadArgumentResponse = "Bad argument, try one more time"
-const SuccessResponse = "Success! =)"
+const badArgumentResponse = "Bad argument, try one more time"
+const successResponse = "Success! =)"
 
+// AddHandlers registers handlers for given Commander
 func AddHandlers(cmd *commander.Commander) {
 	cmd.RegisterHandler(listCommand, listFunc)
 	cmd.RegisterHandler(addCommand, addFunc)
@@ -56,7 +57,7 @@ func AddHandlers(cmd *commander.Commander) {
 func forDaysFunc(param string) string {
 	cnt, err := strconv.Atoi(param)
 	if err != nil || cnt < 1 {
-		return BadArgumentResponse
+		return badArgumentResponse
 	}
 	rem := storage.AsStrings(storage.RemindersForDays(cnt))
 	if rem == nil {
@@ -77,23 +78,23 @@ func editFunc(str string) string {
 	params := strings.Split(str, " ")
 	id, err := strconv.ParseUint(params[0], 10, 64)
 	if err != nil || len(params) < 2 {
-		return BadArgumentResponse
+		return badArgumentResponse
 	}
 	if err := storage.Edit(id, strings.Join(params[1:], " ")); err != nil {
 		return err.Error()
 	}
-	return SuccessResponse
+	return successResponse
 }
 
 func removeByIdFunc(params string) string {
 	id, err := strconv.ParseUint(params, 10, 64)
 	if err != nil {
-		return BadArgumentResponse
+		return badArgumentResponse
 	}
 	if err := storage.RemoveById(id); err != nil {
 		return err.Error()
 	}
-	return SuccessResponse
+	return successResponse
 }
 
 func removeOutdatedFunc(string) string {
@@ -138,11 +139,11 @@ func addFunc(str string) string {
 		var err error
 		date, err = time.Parse("02.01.06", params[0])
 		if err != nil || len(params) < 2 {
-			return BadArgumentResponse
+			return badArgumentResponse
 		}
 	}
 	if err := storage.Add(storage.NewReminder(strings.Join(params[1:], " "), date)); err != nil {
 		return err.Error()
 	}
-	return SuccessResponse
+	return successResponse
 }
