@@ -72,7 +72,7 @@ func (cmd *Commander) Run() error {
 // RegisterHandler adds a new Handler into Commander
 func (cmd *Commander) RegisterHandler(name string, handler Handler) {
 	if _, ok := cmd.handlers[name]; ok {
-		log.Println(errors.New("add handler with existing name"))
+		log.Printf("add handler with existing name - %s\n", name)
 	}
 	cmd.handlers[name] = handler
 }
