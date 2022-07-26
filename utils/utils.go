@@ -1,9 +1,10 @@
 package utils
 
 import (
-	"github.com/golang/protobuf/ptypes/timestamp"
 	"reflect"
 	"time"
+
+	"github.com/golang/protobuf/ptypes/timestamp"
 )
 
 // TimestampToTime converts *timestamp.Timestamp to time.Time
@@ -15,7 +16,6 @@ func TimestampToTime(tm *timestamp.Timestamp) time.Time {
 func TimeToTimestamp(time time.Time) *timestamp.Timestamp {
 	return &timestamp.Timestamp{
 		Seconds: time.Unix(),
-		Nanos:   int32(time.UnixNano()),
 	}
 }
 

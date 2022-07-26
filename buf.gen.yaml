@@ -10,3 +10,10 @@ plugins:
     out: pkg/api
     opt:
       - paths=source_relative
+  - name: grpc-gateway
+    path: bin/protoc-gen-grpc-gateway
+    out: pkg/api
+    opt:
+      - paths=source_relative
+      - generate_unbound_methods=true
+      - allow_delete_body=true
