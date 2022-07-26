@@ -1,9 +1,23 @@
 package utils
 
 import (
+	"github.com/golang/protobuf/ptypes/timestamp"
 	"reflect"
 	"time"
 )
+
+// TimestampToTime converts *timestamp.Timestamp to time.Time
+func TimestampToTime(tm *timestamp.Timestamp) time.Time {
+	return time.Unix(tm.Seconds, int64(tm.Nanos))
+}
+
+// TimeToTimestamp converts time.Time to *timestamp.Timestamp
+func TimeToTimestamp(time time.Time) *timestamp.Timestamp {
+	return &timestamp.Timestamp{
+		Seconds: time.Unix(),
+		Nanos:   int32(time.UnixNano()),
+	}
+}
 
 // UpToDay rounds the date down to the day
 func UpToDay(date time.Time) time.Time {

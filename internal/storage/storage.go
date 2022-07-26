@@ -10,8 +10,11 @@ import (
 
 var data []*Reminder
 
-var idNotExistsError = errors.New("given id doesn't exist")
-var idAlreadyExistsError = errors.New("given id already exist")
+// possible errors
+var (
+	ErrorIDNotExists     = errors.New("given id doesn't exist")
+	ErrorIDAlreadyExists = errors.New("given id already exist")
+)
 
 func init() {
 	data = make([]*Reminder, 0)
@@ -27,7 +30,7 @@ func firstAfterOrEqual(date time.Time) int {
 // Add adds a new Reminder into storage
 func Add(rem *Reminder) error {
 	if _, err := indexById(rem.ID); err == nil {
-		return idAlreadyExistsError
+		return ErrorIDAlreadyExists
 	}
 	index := firstAfterOrEqual(rem.Date)
 	data = utils.Insert(data, rem, index)
@@ -86,7 +89,7 @@ func RemoveById(id uint64) error {
 func Edit(id uint64, newText string) error {
 	index, err := indexById(id)
 	if err == nil {
-		data[index].What = newText
+		data[index].Text = newText
 	}
 	return err
 }
@@ -97,7 +100,7 @@ func indexById(id uint64) (int, error) {
 			return i, nil
 		}
 	}
-	return -1, idNotExistsError
+	return -1, ErrorIDNotExists
 }
 
 // Data returns all reminders as slice

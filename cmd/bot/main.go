@@ -8,9 +8,7 @@ import (
 	"gitlab.ozon.dev/davidokk/reminder-manager/internal/handlers"
 )
 
-func main() {
-	log.Println("start main")
-
+func runBot() {
 	cmd, err := commander.Init(os.Args[1])
 	if err != nil {
 		log.Fatal(err)
@@ -21,4 +19,8 @@ func main() {
 	if err := cmd.Run(); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func main() {
+	runGRPCServer()
 }
