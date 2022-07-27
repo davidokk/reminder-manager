@@ -4,7 +4,7 @@ option go_package = "gitlab.ozon.dev/davidokk/reminder-manager/pkg/api;api";
 
 import "google/protobuf/timestamp.proto";
 import "google/api/annotations.proto";
-
+  
 service Admin {
   rpc ReminderList(ReminderListRequest) returns (ReminderListResponse) {
     option (google.api.http) = {

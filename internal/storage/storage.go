@@ -1,7 +1,8 @@
 package storage
 
 import (
-	"errors"
+	"context"
+	"github.com/pkg/errors"
 	"sort"
 	"sync"
 	"time"
@@ -10,6 +11,7 @@ import (
 )
 
 const poolSize = 10
+const waitingTime = 100 * time.Millisecond
 
 var data []*Reminder
 var poolCh chan struct{}
@@ -19,6 +21,7 @@ var mutex sync.RWMutex
 var (
 	ErrorIDNotExists     = errors.New("given id doesn't exist")
 	ErrorIDAlreadyExists = errors.New("given id already exist")
+	ErrorTimeoutExceeded = errors.New("timeout exceeded")
 )
 
 func init() {
@@ -33,14 +36,54 @@ func firstAfterOrEqual(date time.Time) int {
 	})
 }
 
+type operationType uint8
+
+const (
+	READ  operationType = 0
+	WRITE               = 1
+)
+
+func takeWorker(t operationType) error {
+	ctx, cancel := context.WithTimeout(context.Background(), waitingTime)
+	defer cancel()
+	select {
+	case poolCh <- struct{}{}:
+		if t == READ {
+			mutex.RLock()
+		} else if t == WRITE {
+			mutex.Lock()
+		}
+		return nil
+	case <-ctx.Done():
+		return ErrorTimeoutExceeded
+	}
+}
+
+func returnWorker(t operationType) {
+	<-poolCh
+	if t == READ {
+		mutex.RUnlock()
+	} else if t == WRITE {
+		mutex.Unlock()
+	}
+}
+
+// Data returns all reminders as slice
+func Data() ([]*Reminder, error) {
+	if err := takeWorker(READ); err != nil {
+		return nil, err
+	}
+	defer returnWorker(READ)
+
+	return utils.Clone(data), nil
+}
+
 // Add adds a new Reminder into storage
 func Add(rem *Reminder) error {
-	poolCh <- struct{}{}
-	mutex.Lock()
-	defer func() {
-		mutex.Unlock()
-		<-poolCh
-	}()
+	if err := takeWorker(WRITE); err != nil {
+		return err
+	}
+	defer returnWorker(WRITE)
 
 	if _, err := indexById(rem.ID); err == nil {
 		return ErrorIDAlreadyExists
@@ -50,25 +93,32 @@ func Add(rem *Reminder) error {
 	return nil
 }
 
-// RemindersForDays returns list of reminders for the next count days
-func RemindersForDays(count int) []*Reminder {
-	if count < 1 {
-		return nil
+// RemoveById removes Reminder with given ID
+func RemoveById(id uint64) error {
+	if err := takeWorker(WRITE); err != nil {
+		return err
 	}
+	defer returnWorker(WRITE)
 
-	poolCh <- struct{}{}
-	mutex.RLock()
-	defer func() {
-		mutex.RUnlock()
-		<-poolCh
-	}()
-
-	l := firstAfterOrEqual(utils.UpToDay(time.Now()))
-	r := firstAfterOrEqual(utils.UpToDay(time.Now()).Add(24 * time.Hour * time.Duration(count)))
-	if l == r {
-		return nil
+	index, err := indexById(id)
+	if err == nil {
+		data = utils.Remove(data, index)
 	}
-	return utils.Clone(data[l:r])
+	return err
+}
+
+// Edit allows to change the text of Reminder with given ID
+func Edit(id uint64, newText string) error {
+	if err := takeWorker(WRITE); err != nil {
+		return err
+	}
+	defer returnWorker(WRITE)
+
+	index, err := indexById(id)
+	if err == nil {
+		data[index].Text = newText
+	}
+	return err
 }
 
 // AsStrings applies Reminder.ToString to each Reminder
@@ -84,69 +134,6 @@ func AsStrings(rem []*Reminder) []string {
 	return str
 }
 
-// RemoveOutdated removes from storage all outdated entries
-// return count of deleted entries
-func RemoveOutdated() int {
-	poolCh <- struct{}{}
-	mutex.Lock()
-	defer func() {
-		mutex.Unlock()
-		<-poolCh
-	}()
-
-	outdated := outdatedCount()
-	data = data[outdated:]
-	return outdated
-}
-
-func outdatedCount() (cnt int) {
-	return firstAfterOrEqual(utils.UpToDay(time.Now()))
-}
-
-// OutdatedCount returns count of outdated records
-func OutdatedCount() int {
-	poolCh <- struct{}{}
-	mutex.RLock()
-	defer func() {
-		mutex.RUnlock()
-		<-poolCh
-	}()
-
-	return firstAfterOrEqual(utils.UpToDay(time.Now()))
-}
-
-// RemoveById removes Reminder with given ID
-func RemoveById(id uint64) error {
-	poolCh <- struct{}{}
-	mutex.Lock()
-	defer func() {
-		mutex.Unlock()
-		<-poolCh
-	}()
-
-	index, err := indexById(id)
-	if err == nil {
-		data = utils.Remove(data, index)
-	}
-	return err
-}
-
-// Edit allows to change the text of Reminder with given ID
-func Edit(id uint64, newText string) error {
-	poolCh <- struct{}{}
-	mutex.Lock()
-	defer func() {
-		mutex.Unlock()
-		<-poolCh
-	}()
-
-	index, err := indexById(id)
-	if err == nil {
-		data[index].Text = newText
-	}
-	return err
-}
-
 func indexById(id uint64) (int, error) {
 	for i, cur := range data {
 		if cur.ID == id {
@@ -154,16 +141,4 @@ func indexById(id uint64) (int, error) {
 		}
 	}
 	return -1, ErrorIDNotExists
-}
-
-// Data returns all reminders as slice
-func Data() []*Reminder {
-	poolCh <- struct{}{}
-	mutex.RLock()
-	defer func() {
-		mutex.RUnlock()
-		<-poolCh
-	}()
-
-	return utils.Clone(data)
 }

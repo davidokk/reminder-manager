@@ -17,3 +17,9 @@ plugins:
       - paths=source_relative
       - generate_unbound_methods=true
       - allow_delete_body=true
+  - name: openapiv2
+    path: bin/protoc-gen-openapiv2
+    out: pkg/api
+    opt:
+      - generate_unbound_methods=true
+      - allow_delete_body=true

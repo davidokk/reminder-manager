@@ -36,10 +36,10 @@ func runREST() {
 	mux := runtime.NewServeMux()
 	opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
 	if err := pb.RegisterAdminHandlerFromEndpoint(ctx, mux, ":8081", opts); err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	if err := http.ListenAndServe(":8080", mux); err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 }

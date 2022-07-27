@@ -19,7 +19,13 @@ type implementation struct {
 }
 
 func (i *implementation) ReminderList(context.Context, *pb.ReminderListRequest) (*pb.ReminderListResponse, error) {
-	reminders := storage.Data()
+	reminders, err := storage.Data()
+	if err != nil {
+		if err == storage.ErrorTimeoutExceeded {
+			return nil, status.Error(codes.DeadlineExceeded, err.Error())
+		}
+		return nil, status.Error(codes.Internal, err.Error())
+	}
 	result := make([]*pb.Reminder, 0, len(reminders))
 	for _, rem := range reminders {
 		result = append(result, &pb.Reminder{
