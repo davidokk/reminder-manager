@@ -10,6 +10,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+// New returns an implementation of proto AdminServer
 func New() pb.AdminServer {
 	return &implementation{}
 }
@@ -60,7 +61,7 @@ func (i *implementation) ReminderUpdate(ctx context.Context, in *pb.ReminderUpda
 }
 
 func (i *implementation) ReminderRemove(ctx context.Context, in *pb.ReminderRemoveRequest) (*pb.ReminderRemoveResponse, error) {
-	if err := storage.RemoveById(in.GetId()); err != nil {
+	if err := storage.RemoveByID(in.GetId()); err != nil {
 		if err == storage.ErrorIDNotExists {
 			return nil, status.Error(codes.NotFound, err.Error())
 		}

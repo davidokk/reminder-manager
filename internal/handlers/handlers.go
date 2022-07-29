@@ -15,14 +15,14 @@ const (
 	helpCommand       = "help"
 	addCommand        = "add"
 	listCommand       = "list"
-	removeByIdCommand = "rm"
+	removeByIDCommand = "rm"
 	editCommand       = "edit"
 )
 
 var description = map[string]string{
 	addCommand:        "[dd.mm.yy / today / tomorrow] [text] adds a new reminder",
 	listCommand:       "shows all your plans in chronological order",
-	removeByIdCommand: "[id] removes record with given id",
+	removeByIDCommand: "[id] removes record with given id",
 	editCommand:       "[id] [new text] changes the reminder text",
 	helpCommand:       "show this menu",
 }
@@ -34,7 +34,7 @@ const successResponse = "Success! =)"
 func AddHandlers(cmd *commander.Commander) {
 	cmd.RegisterHandler(listCommand, listFunc)
 	cmd.RegisterHandler(addCommand, addFunc)
-	cmd.RegisterHandler(removeByIdCommand, removeByIdFunc)
+	cmd.RegisterHandler(removeByIDCommand, removeByIDFunc)
 	cmd.RegisterHandler(editCommand, editFunc)
 
 	var help string
@@ -57,12 +57,12 @@ func editFunc(str string) string {
 	return successResponse
 }
 
-func removeByIdFunc(params string) string {
+func removeByIDFunc(params string) string {
 	id, err := strconv.ParseUint(params, 10, 64)
 	if err != nil {
 		return badArgumentResponse
 	}
-	if err := storage.RemoveById(id); err != nil {
+	if err := storage.RemoveByID(id); err != nil {
 		return err.Error()
 	}
 	return successResponse

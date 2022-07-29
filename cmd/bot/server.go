@@ -14,7 +14,7 @@ import (
 )
 
 func runGRPCServer() {
-	listener, err := net.Listen("tcp", ":8081")
+	listener, err := net.Listen("tcp", "localhost:8081")
 	if err != nil {
 		log.Fatal(err)
 	}

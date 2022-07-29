@@ -2,10 +2,11 @@ package storage
 
 import (
 	"context"
-	"github.com/pkg/errors"
 	"sort"
 	"sync"
 	"time"
+
+	"github.com/pkg/errors"
 
 	"gitlab.ozon.dev/davidokk/reminder-manager/utils"
 )
@@ -39,8 +40,8 @@ func firstAfterOrEqual(date time.Time) int {
 type operationType uint8
 
 const (
-	READ  operationType = 0
-	WRITE operationType = 1
+	read  operationType = 0
+	write operationType = 1
 )
 
 func takeWorker(t operationType) error {
@@ -48,9 +49,9 @@ func takeWorker(t operationType) error {
 	defer cancel()
 	select {
 	case poolCh <- struct{}{}:
-		if t == READ {
+		if t == read {
 			mutex.RLock()
-		} else if t == WRITE {
+		} else if t == write {
 			mutex.Lock()
 		}
 		return nil
@@ -61,31 +62,31 @@ func takeWorker(t operationType) error {
 
 func returnWorker(t operationType) {
 	<-poolCh
-	if t == READ {
+	if t == read {
 		mutex.RUnlock()
-	} else if t == WRITE {
+	} else if t == write {
 		mutex.Unlock()
 	}
 }
 
 // Data returns all reminders as slice
 func Data() ([]*Reminder, error) {
-	if err := takeWorker(READ); err != nil {
+	if err := takeWorker(read); err != nil {
 		return nil, err
 	}
-	defer returnWorker(READ)
+	defer returnWorker(read)
 
 	return utils.Clone(data), nil
 }
 
 // Add adds a new Reminder into storage
 func Add(rem *Reminder) error {
-	if err := takeWorker(WRITE); err != nil {
+	if err := takeWorker(write); err != nil {
 		return err
 	}
-	defer returnWorker(WRITE)
+	defer returnWorker(write)
 
-	if _, err := indexById(rem.ID); err == nil {
+	if _, err := indexByID(rem.ID); err == nil {
 		return ErrorIDAlreadyExists
 	}
 	index := firstAfterOrEqual(rem.Date)
@@ -93,14 +94,14 @@ func Add(rem *Reminder) error {
 	return nil
 }
 
-// RemoveById removes Reminder with given ID
-func RemoveById(id uint64) error {
-	if err := takeWorker(WRITE); err != nil {
+// RemoveByID removes Reminder with given ID
+func RemoveByID(id uint64) error {
+	if err := takeWorker(write); err != nil {
 		return err
 	}
-	defer returnWorker(WRITE)
+	defer returnWorker(write)
 
-	index, err := indexById(id)
+	index, err := indexByID(id)
 	if err == nil {
 		data = utils.Remove(data, index)
 	}
@@ -109,12 +110,12 @@ func RemoveById(id uint64) error {
 
 // Edit allows to change the text of Reminder with given ID
 func Edit(id uint64, newText string) error {
-	if err := takeWorker(WRITE); err != nil {
+	if err := takeWorker(write); err != nil {
 		return err
 	}
-	defer returnWorker(WRITE)
+	defer returnWorker(write)
 
-	index, err := indexById(id)
+	index, err := indexByID(id)
 	if err == nil {
 		data[index].Text = newText
 	}
@@ -134,7 +135,7 @@ func AsStrings(rem []*Reminder) []string {
 	return str
 }
 
-func indexById(id uint64) (int, error) {
+func indexByID(id uint64) (int, error) {
 	for i, cur := range data {
 		if cur.ID == id {
 			return i, nil
