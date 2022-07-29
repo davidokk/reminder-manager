@@ -40,7 +40,7 @@ type operationType uint8
 
 const (
 	READ  operationType = 0
-	WRITE               = 1
+	WRITE operationType = 1
 )
 
 func takeWorker(t operationType) error {

@@ -2,6 +2,12 @@
 run:
 	go run cmd/bot/main.go cmd/bot/server.go
 
+# build app
+.PHONY: build
+build:
+	go mod download \
+    && CGO_ENABLED=0 go build -o ./bin/bot-main$(shell go env GOEXE) ./cmd/bot/main.go ./cmd/bot/server.go
+
 LOCAL_BIN:=$(CURDIR)/bin
 .PHONY: .deps
 .deps:
