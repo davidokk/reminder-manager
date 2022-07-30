@@ -24,8 +24,8 @@ func NewReminder(text string, date time.Time) *Reminder {
 	}
 }
 
-// ToString converts Reminder to string
-func (rem *Reminder) ToString() string {
+// String converts Reminder to string
+func (rem *Reminder) String() string {
 	date := rem.Date.Format("Mon, 2 Jan")
 	return fmt.Sprintf("[%d]: %s - %s", rem.ID, date, rem.Text)
 }

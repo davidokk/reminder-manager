@@ -3,6 +3,8 @@ package api
 import (
 	"context"
 
+	"github.com/pkg/errors"
+
 	"gitlab.ozon.dev/davidokk/reminder-manager/internal/storage"
 	pb "gitlab.ozon.dev/davidokk/reminder-manager/pkg/api"
 	"gitlab.ozon.dev/davidokk/reminder-manager/utils"
@@ -19,10 +21,10 @@ type implementation struct {
 	pb.UnsafeAdminServer
 }
 
-func (i *implementation) ReminderList(context.Context, *pb.ReminderListRequest) (*pb.ReminderListResponse, error) {
-	reminders, err := storage.Data()
+func (i *implementation) ReminderList(ctx context.Context, in *pb.ReminderListRequest) (*pb.ReminderListResponse, error) {
+	reminders, err := storage.Data(ctx)
 	if err != nil {
-		if err == storage.ErrorTimeoutExceeded {
+		if errors.Is(err, context.DeadlineExceeded) {
 			return nil, status.Error(codes.DeadlineExceeded, err.Error())
 		}
 		return nil, status.Error(codes.Internal, err.Error())
@@ -41,9 +43,11 @@ func (i *implementation) ReminderList(context.Context, *pb.ReminderListRequest) 
 }
 
 func (i *implementation) ReminderCreate(ctx context.Context, in *pb.ReminderCreateRequest) (*pb.ReminderCreateResponse, error) {
-	if err := storage.Add(storage.NewReminder(in.GetText(), utils.TimestampToTime(in.GetDate()))); err != nil {
-		if err == storage.ErrorIDAlreadyExists {
+	if err := storage.Add(ctx, storage.NewReminder(in.GetText(), utils.TimestampToTime(in.GetDate()))); err != nil {
+		if errors.Is(err, storage.ErrorIDAlreadyExists) {
 			return nil, status.Error(codes.AlreadyExists, err.Error())
+		} else if errors.Is(err, context.DeadlineExceeded) {
+			return nil, status.Error(codes.DeadlineExceeded, err.Error())
 		}
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -51,9 +55,11 @@ func (i *implementation) ReminderCreate(ctx context.Context, in *pb.ReminderCrea
 }
 
 func (i *implementation) ReminderUpdate(ctx context.Context, in *pb.ReminderUpdateRequest) (*pb.ReminderUpdateResponse, error) {
-	if err := storage.Edit(in.GetId(), in.GetText()); err != nil {
-		if err == storage.ErrorIDNotExists {
+	if err := storage.Edit(ctx, in.GetId(), in.GetText()); err != nil {
+		if errors.Is(err, storage.ErrorIDNotExists) {
 			return nil, status.Error(codes.NotFound, err.Error())
+		} else if errors.Is(err, context.DeadlineExceeded) {
+			return nil, status.Error(codes.DeadlineExceeded, err.Error())
 		}
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -61,9 +67,11 @@ func (i *implementation) ReminderUpdate(ctx context.Context, in *pb.ReminderUpda
 }
 
 func (i *implementation) ReminderRemove(ctx context.Context, in *pb.ReminderRemoveRequest) (*pb.ReminderRemoveResponse, error) {
-	if err := storage.RemoveByID(in.GetId()); err != nil {
-		if err == storage.ErrorIDNotExists {
+	if err := storage.RemoveByID(ctx, in.GetId()); err != nil {
+		if errors.Is(err, storage.ErrorIDNotExists) {
 			return nil, status.Error(codes.NotFound, err.Error())
+		} else if errors.Is(err, context.DeadlineExceeded) {
+			return nil, status.Error(codes.DeadlineExceeded, err.Error())
 		}
 		return nil, status.Error(codes.Internal, err.Error())
 	}

@@ -4,17 +4,21 @@ import (
 	"context"
 	"log"
 	"net"
-	"net/http"
+
+	"gitlab.ozon.dev/davidokk/reminder-manager/config"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	apiPkg "gitlab.ozon.dev/davidokk/reminder-manager/internal/api"
+
+	"net/http"
+
 	pb "gitlab.ozon.dev/davidokk/reminder-manager/pkg/api"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
 func runGRPCServer() {
-	listener, err := net.Listen("tcp", "localhost:8081")
+	listener, err := net.Listen(config.App.GRPC.Network, config.App.GRPC.Address)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -35,11 +39,11 @@ func runREST() {
 
 	mux := runtime.NewServeMux()
 	opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
-	if err := pb.RegisterAdminHandlerFromEndpoint(ctx, mux, ":8081", opts); err != nil {
+	if err := pb.RegisterAdminHandlerFromEndpoint(ctx, mux, config.App.REST.Endpoint, opts); err != nil {
 		log.Fatal(err)
 	}
 
-	if err := http.ListenAndServe(":8080", mux); err != nil {
+	if err := http.ListenAndServe(config.App.REST.Address, mux); err != nil {
 		log.Fatal(err)
 	}
 }

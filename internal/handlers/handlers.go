@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"strings"
@@ -51,7 +52,7 @@ func editFunc(str string) string {
 	if err != nil || len(params) < 2 {
 		return badArgumentResponse
 	}
-	if err := storage.Edit(id, strings.Join(params[1:], " ")); err != nil {
+	if err := storage.Edit(context.Background(), id, strings.Join(params[1:], " ")); err != nil {
 		return err.Error()
 	}
 	return successResponse
@@ -62,14 +63,14 @@ func removeByIDFunc(params string) string {
 	if err != nil {
 		return badArgumentResponse
 	}
-	if err := storage.RemoveByID(id); err != nil {
+	if err := storage.RemoveByID(context.Background(), id); err != nil {
 		return err.Error()
 	}
 	return successResponse
 }
 
 func listFunc(string) string {
-	res, err := storage.Data()
+	res, err := storage.Data(context.Background())
 	if err != nil {
 		return err.Error()
 	}
@@ -93,7 +94,7 @@ func addFunc(str string) string {
 			return badArgumentResponse
 		}
 	}
-	if err := storage.Add(storage.NewReminder(strings.Join(params[1:], " "), date)); err != nil {
+	if err := storage.Add(context.Background(), storage.NewReminder(strings.Join(params[1:], " "), date)); err != nil {
 		return err.Error()
 	}
 	return successResponse

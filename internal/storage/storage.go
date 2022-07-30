@@ -6,13 +6,12 @@ import (
 	"sync"
 	"time"
 
+	"gitlab.ozon.dev/davidokk/reminder-manager/utils"
+
 	"github.com/pkg/errors"
 
-	"gitlab.ozon.dev/davidokk/reminder-manager/utils"
+	"gitlab.ozon.dev/davidokk/reminder-manager/config"
 )
-
-const poolSize = 10
-const waitingTime = 100 * time.Millisecond
 
 var data []*Reminder
 var poolCh chan struct{}
@@ -22,12 +21,12 @@ var mutex sync.RWMutex
 var (
 	ErrorIDNotExists     = errors.New("given id doesn't exist")
 	ErrorIDAlreadyExists = errors.New("given id already exist")
-	ErrorTimeoutExceeded = errors.New("timeout exceeded")
 )
 
-func init() {
+// Init initializes the storage
+func Init() {
 	data = make([]*Reminder, 0)
-	poolCh = make(chan struct{}, poolSize)
+	poolCh = make(chan struct{}, config.App.Storage.PoolSize)
 }
 
 // firstAfterOrEqual returns index of min date after or equal to given
@@ -44,8 +43,8 @@ const (
 	write operationType = 1
 )
 
-func takeWorker(t operationType) error {
-	ctx, cancel := context.WithTimeout(context.Background(), waitingTime)
+func takeWorker(c context.Context, t operationType) error {
+	ctx, cancel := context.WithTimeout(c, config.App.Storage.WaitingTime)
 	defer cancel()
 	select {
 	case poolCh <- struct{}{}:
@@ -56,7 +55,7 @@ func takeWorker(t operationType) error {
 		}
 		return nil
 	case <-ctx.Done():
-		return ErrorTimeoutExceeded
+		return ctx.Err()
 	}
 }
 
@@ -70,8 +69,8 @@ func returnWorker(t operationType) {
 }
 
 // Data returns all reminders as slice
-func Data() ([]*Reminder, error) {
-	if err := takeWorker(read); err != nil {
+func Data(ctx context.Context) ([]*Reminder, error) {
+	if err := takeWorker(ctx, read); err != nil {
 		return nil, err
 	}
 	defer returnWorker(read)
@@ -80,8 +79,8 @@ func Data() ([]*Reminder, error) {
 }
 
 // Add adds a new Reminder into storage
-func Add(rem *Reminder) error {
-	if err := takeWorker(write); err != nil {
+func Add(ctx context.Context, rem *Reminder) error {
+	if err := takeWorker(ctx, write); err != nil {
 		return err
 	}
 	defer returnWorker(write)
@@ -95,8 +94,8 @@ func Add(rem *Reminder) error {
 }
 
 // RemoveByID removes Reminder with given ID
-func RemoveByID(id uint64) error {
-	if err := takeWorker(write); err != nil {
+func RemoveByID(ctx context.Context, id uint64) error {
+	if err := takeWorker(ctx, write); err != nil {
 		return err
 	}
 	defer returnWorker(write)
@@ -109,8 +108,8 @@ func RemoveByID(id uint64) error {
 }
 
 // Edit allows to change the text of Reminder with given ID
-func Edit(id uint64, newText string) error {
-	if err := takeWorker(write); err != nil {
+func Edit(ctx context.Context, id uint64, newText string) error {
+	if err := takeWorker(ctx, write); err != nil {
 		return err
 	}
 	defer returnWorker(write)
@@ -122,7 +121,7 @@ func Edit(id uint64, newText string) error {
 	return err
 }
 
-// AsStrings applies Reminder.ToString to each Reminder
+// AsStrings applies Reminder.String to each Reminder
 // and return the resulting slice
 func AsStrings(rem []*Reminder) []string {
 	if rem == nil {
@@ -130,7 +129,7 @@ func AsStrings(rem []*Reminder) []string {
 	}
 	str := make([]string, 0, len(rem))
 	for _, cur := range rem {
-		str = append(str, cur.ToString())
+		str = append(str, cur.String())
 	}
 	return str
 }
