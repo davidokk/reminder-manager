@@ -1,0 +1,22 @@
+variables:
+  GO_VERSION: "1.18"
+  LINT_VERSION: "1.47.2"
+
+stages:
+  - build
+
+go build:
+  image: golang:$GO_VERSION-alpine
+  stage: build
+  script:
+    - apk add --update make git curl
+    - make build
+  timeout: 15 minutes
+
+linter:
+  image: golangci/golangci-lint:v$LINT_VERSION
+  stage: build
+  script:
+    - golangci-lint version
+    - golangci-lint run --new-from-rev=origin/master --config=.golangci.yaml ./...
+  timeout: 10 minutes

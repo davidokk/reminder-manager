@@ -1,0 +1,64 @@
+syntax = "proto3";
+
+option go_package = "gitlab.ozon.dev/davidokk/reminder-manager/pkg/api;api";
+
+import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+  
+service Admin {
+  rpc ReminderList(ReminderListRequest) returns (ReminderListResponse) {
+    option (google.api.http) = {
+      get: "/reminders"
+    };
+  }
+
+  rpc ReminderCreate(ReminderCreateRequest) returns (ReminderCreateResponse) {
+    option (google.api.http) = {
+      post: "/reminders"
+      body: "*"
+    };
+  }
+
+  rpc ReminderUpdate(ReminderUpdateRequest) returns (ReminderUpdateResponse) {
+    option (google.api.http) = {
+      put: "/reminders"
+      body: "*"
+    };
+  }
+
+  rpc ReminderRemove(ReminderRemoveRequest) returns (ReminderRemoveResponse) {
+    option (google.api.http) = {
+      delete: "/reminders"
+      body: "*"
+    };
+  }
+}
+
+message Reminder {
+
+  google.protobuf.Timestamp date = 1;
+  string text = 2;
+  uint64 id = 3;
+}
+
+message ReminderListRequest {}
+message ReminderListResponse {
+  repeated Reminder reminders = 1;
+}
+
+message ReminderCreateRequest {
+  google.protobuf.Timestamp date = 1;
+  string text = 2;
+}
+message ReminderCreateResponse {}
+
+message ReminderUpdateRequest {
+  uint64 id = 1;
+  string text = 2;
+}
+message ReminderUpdateResponse {}
+
+message ReminderRemoveRequest {
+  uint64 id = 1;
+}
+message ReminderRemoveResponse {}

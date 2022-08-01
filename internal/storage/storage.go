@@ -1,20 +1,32 @@
 package storage
 
 import (
-	"errors"
+	"context"
 	"sort"
+	"sync"
 	"time"
 
 	"gitlab.ozon.dev/davidokk/reminder-manager/utils"
+
+	"github.com/pkg/errors"
+
+	"gitlab.ozon.dev/davidokk/reminder-manager/config"
 )
 
 var data []*Reminder
+var poolCh chan struct{}
+var mutex sync.RWMutex
 
-var idNotExistsError = errors.New("given id doesn't exist")
-var idAlreadyExistsError = errors.New("given id already exist")
+// possible errors
+var (
+	ErrorIDNotExists     = errors.New("given id doesn't exist")
+	ErrorIDAlreadyExists = errors.New("given id already exist")
+)
 
-func init() {
+// Init initializes the storage
+func Init() {
 	data = make([]*Reminder, 0)
+	poolCh = make(chan struct{}, config.App.Storage.PoolSize)
 }
 
 // firstAfterOrEqual returns index of min date after or equal to given
@@ -24,58 +36,71 @@ func firstAfterOrEqual(date time.Time) int {
 	})
 }
 
+type operationType uint8
+
+const (
+	read  operationType = 0
+	write operationType = 1
+)
+
+func takeWorker(c context.Context, t operationType) error {
+	ctx, cancel := context.WithTimeout(c, config.App.Storage.WaitingTime)
+	defer cancel()
+	select {
+	case poolCh <- struct{}{}:
+		if t == read {
+			mutex.RLock()
+		} else if t == write {
+			mutex.Lock()
+		}
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+}
+
+func returnWorker(t operationType) {
+	<-poolCh
+	if t == read {
+		mutex.RUnlock()
+	} else if t == write {
+		mutex.Unlock()
+	}
+}
+
+// Data returns all reminders as slice
+func Data(ctx context.Context) ([]*Reminder, error) {
+	if err := takeWorker(ctx, read); err != nil {
+		return nil, err
+	}
+	defer returnWorker(read)
+
+	return utils.Clone(data), nil
+}
+
 // Add adds a new Reminder into storage
-func Add(rem *Reminder) error {
-	if _, err := indexById(rem.ID); err == nil {
-		return idAlreadyExistsError
+func Add(ctx context.Context, rem *Reminder) error {
+	if err := takeWorker(ctx, write); err != nil {
+		return err
+	}
+	defer returnWorker(write)
+
+	if _, err := indexByID(rem.ID); err == nil {
+		return ErrorIDAlreadyExists
 	}
 	index := firstAfterOrEqual(rem.Date)
 	data = utils.Insert(data, rem, index)
 	return nil
 }
 
-// RemindersForDays returns list of reminders for the next count days
-func RemindersForDays(count int) []*Reminder {
-	if count < 1 {
-		return nil
+// RemoveByID removes Reminder with given ID
+func RemoveByID(ctx context.Context, id uint64) error {
+	if err := takeWorker(ctx, write); err != nil {
+		return err
 	}
-	l := firstAfterOrEqual(utils.UpToDay(time.Now()))
-	r := firstAfterOrEqual(utils.UpToDay(time.Now()).Add(24 * time.Hour * time.Duration(count)))
-	if l == r {
-		return nil
-	}
-	return utils.Clone(data[l:r])
-}
+	defer returnWorker(write)
 
-// AsStrings applies Reminder.ToString to each Reminder
-// and return the resulting slice
-func AsStrings(rem []*Reminder) []string {
-	if rem == nil {
-		return nil
-	}
-	str := make([]string, 0, len(rem))
-	for _, cur := range rem {
-		str = append(str, cur.ToString())
-	}
-	return str
-}
-
-// RemoveOutdated removes from storage all outdated entries
-// return count of deleted entries
-func RemoveOutdated() int {
-	outdated := OutdatedCount()
-	data = data[outdated:]
-	return outdated
-}
-
-// OutdatedCount returns count of outdated records
-func OutdatedCount() (cnt int) {
-	return firstAfterOrEqual(utils.UpToDay(time.Now()))
-}
-
-// RemoveById removes Reminder with given ID
-func RemoveById(id uint64) error {
-	index, err := indexById(id)
+	index, err := indexByID(id)
 	if err == nil {
 		data = utils.Remove(data, index)
 	}
@@ -83,24 +108,37 @@ func RemoveById(id uint64) error {
 }
 
 // Edit allows to change the text of Reminder with given ID
-func Edit(id uint64, newText string) error {
-	index, err := indexById(id)
+func Edit(ctx context.Context, id uint64, newText string) error {
+	if err := takeWorker(ctx, write); err != nil {
+		return err
+	}
+	defer returnWorker(write)
+
+	index, err := indexByID(id)
 	if err == nil {
-		data[index].What = newText
+		data[index].Text = newText
 	}
 	return err
 }
 
-func indexById(id uint64) (int, error) {
+// AsStrings applies Reminder.String to each Reminder
+// and return the resulting slice
+func AsStrings(rem []*Reminder) []string {
+	if rem == nil {
+		return nil
+	}
+	str := make([]string, 0, len(rem))
+	for _, cur := range rem {
+		str = append(str, cur.String())
+	}
+	return str
+}
+
+func indexByID(id uint64) (int, error) {
 	for i, cur := range data {
 		if cur.ID == id {
 			return i, nil
 		}
 	}
-	return -1, idNotExistsError
-}
-
-// Data returns all reminders as slice
-func Data() []*Reminder {
-	return utils.Clone(data)
+	return -1, ErrorIDNotExists
 }

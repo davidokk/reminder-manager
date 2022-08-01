@@ -2,16 +2,15 @@ package main
 
 import (
 	"log"
-	"os"
 
+	"gitlab.ozon.dev/davidokk/reminder-manager/config"
 	"gitlab.ozon.dev/davidokk/reminder-manager/internal/commander"
 	"gitlab.ozon.dev/davidokk/reminder-manager/internal/handlers"
+	"gitlab.ozon.dev/davidokk/reminder-manager/internal/storage"
 )
 
-func main() {
-	log.Println("start main")
-
-	cmd, err := commander.Init(os.Args[1])
+func runBot() {
+	cmd, err := commander.Init(config.App.Bot.APIKey)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -21,4 +20,14 @@ func main() {
 	if err := cmd.Run(); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func main() {
+	config.ReadConfigs()
+
+	storage.Init()
+
+	go runBot()
+	go runREST()
+	runGRPCServer()
 }
