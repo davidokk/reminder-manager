@@ -47,30 +47,36 @@ func AddHandlers(cmd *commander.Commander) {
 }
 
 func editFunc(str string) string {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	params := strings.Split(str, " ")
 	id, err := strconv.ParseUint(params[0], 10, 64)
 	if err != nil || len(params) < 2 {
 		return badArgumentResponse
 	}
-	if err := storage.Edit(context.Background(), id, strings.Join(params[1:], " ")); err != nil {
+	if err := storage.Edit(ctx, id, strings.Join(params[1:], " ")); err != nil {
 		return err.Error()
 	}
 	return successResponse
 }
 
 func removeByIDFunc(params string) string {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	id, err := strconv.ParseUint(params, 10, 64)
 	if err != nil {
 		return badArgumentResponse
 	}
-	if err := storage.RemoveByID(context.Background(), id); err != nil {
+	if err := storage.RemoveByID(ctx, id); err != nil {
 		return err.Error()
 	}
 	return successResponse
 }
 
 func listFunc(string) string {
-	res, err := storage.Data(context.Background())
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	res, err := storage.Data(ctx)
 	if err != nil {
 		return err.Error()
 	}
@@ -81,6 +87,8 @@ func listFunc(string) string {
 }
 
 func addFunc(str string) string {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	params := strings.Split(str, " ")
 	var date time.Time
 	if params[0] == "today" {
@@ -94,7 +102,7 @@ func addFunc(str string) string {
 			return badArgumentResponse
 		}
 	}
-	if err := storage.Add(context.Background(), storage.NewReminder(strings.Join(params[1:], " "), date)); err != nil {
+	if err := storage.Add(ctx, storage.NewReminder(strings.Join(params[1:], " "), date)); err != nil {
 		return err.Error()
 	}
 	return successResponse
