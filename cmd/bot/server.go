@@ -26,6 +26,7 @@ func runGRPCServer() {
 	grpcServer := grpc.NewServer()
 	pb.RegisterAdminServer(grpcServer, apiPkg.New())
 
+	log.Println("start listening gRPC on", config.App.GRPC.Address)
 	if err = grpcServer.Serve(listener); err != nil {
 		log.Fatal(err)
 	}
@@ -43,7 +44,14 @@ func runREST() {
 		log.Fatal(err)
 	}
 
-	if err := http.ListenAndServe(config.App.REST.Address, mux); err != nil {
+	hmux := http.NewServeMux()
+	hmux.Handle("/", mux)
+
+	fs := http.FileServer(http.Dir("./swagger"))
+	hmux.Handle("/swagger/", http.StripPrefix("/swagger/", fs))
+
+	log.Println("start listening HTTP on", config.App.REST.Address)
+	if err := http.ListenAndServe(config.App.REST.Address, hmux); err != nil {
 		log.Fatal(err)
 	}
 }
