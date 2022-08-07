@@ -48,38 +48,6 @@
         ]
       }
     },
-    "/reminder/get": {
-      "post": {
-        "operationId": "Admin_ReminderGet",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/ReminderGetResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/ReminderGetRequest"
-            }
-          }
-        ],
-        "tags": [
-          "Admin"
-        ]
-      }
-    },
     "/reminder/remove": {
       "delete": {
         "operationId": "Admin_ReminderRemove",
@@ -144,6 +112,37 @@
         ]
       }
     },
+    "/reminder/{id}/get": {
+      "get": {
+        "operationId": "Admin_ReminderGet",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/ReminderGetResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "Admin"
+        ]
+      }
+    },
     "/reminders": {
       "get": {
         "operationId": "Admin_ReminderList",
@@ -197,15 +196,6 @@
       }
     },
     "ReminderCreateResponse": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "format": "uint64"
-        }
-      }
-    },
-    "ReminderGetRequest": {
       "type": "object",
       "properties": {
         "id": {

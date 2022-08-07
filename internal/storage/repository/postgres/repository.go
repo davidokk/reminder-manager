@@ -1,6 +1,8 @@
 package postgres
 
-import "github.com/jackc/pgx/v4/pgxpool"
+import (
+	"github.com/jackc/pgx/v4/pgxpool"
+)
 
 // Repository provides work with postgres
 type Repository struct {

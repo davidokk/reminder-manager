@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"github.com/pkg/errors"
 	"time"
 
 	"github.com/Masterminds/squirrel"
@@ -73,6 +74,10 @@ func (r *Repository) GetReminder(ctx context.Context, id uint64) (*models.Remind
 
 // UpdateReminder allows to change the text of Reminder with given ID
 func (r *Repository) UpdateReminder(ctx context.Context, id uint64, text string) error {
+	_, err := r.GetReminder(ctx, id)
+	if err != nil {
+		return errors.New("can't find given id")
+	}
 	query, args, err := squirrel.Update("reminders").
 		Set("text", text).
 		Where(squirrel.Eq{"id": id}).
@@ -90,6 +95,10 @@ func (r *Repository) UpdateReminder(ctx context.Context, id uint64, text string)
 
 // RemoveReminder removes Reminder with given ID
 func (r *Repository) RemoveReminder(ctx context.Context, id uint64) error {
+	_, err := r.GetReminder(ctx, id)
+	if err != nil {
+		return errors.New("can't find given id")
+	}
 	query, args, err := squirrel.Delete("reminders").
 		Where(squirrel.Eq{"id": id}).
 		PlaceholderFormat(squirrel.Dollar).

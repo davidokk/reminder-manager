@@ -14,8 +14,7 @@ service Admin {
 
   rpc ReminderGet(ReminderGetRequest) returns (ReminderGetResponse) {
     option (google.api.http) = {
-      post: "/reminder/get"
-      body: "*"
+      get: "/reminder/{id}/get"
     };
   }
 

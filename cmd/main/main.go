@@ -11,7 +11,7 @@ func main() {
 	storage := app.ConnectRepository()
 	defer storage.Close()
 
-	//go app.RunBot(storage)
+	go app.RunBot(storage)
 	go app.RunREST()
 	app.RunGRPCServer(storage)
 }
