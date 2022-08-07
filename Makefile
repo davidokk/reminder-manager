@@ -1,12 +1,17 @@
 .PHONY: run
 run:
-	go run cmd/bot/main.go cmd/bot/server.go
+	go run cmd/main/main.go
 
-# build app
+# build bot
 .PHONY: build
 build:
 	go mod download \
-    && CGO_ENABLED=0 go build -o ./bin/bot-main$(shell go env GOEXE) ./cmd/bot/main.go ./cmd/bot/server.go
+    && CGO_ENABLED=0 go build -o ./bin/bot-main$(shell go env GOEXE) ./cmd/main/main.go
+
+MIGRATIONS_DIR=./migrations
+.PHONY: migration
+migration:
+	goose -dir=${MIGRATIONS_DIR} create $(NAME) sql
 
 LOCAL_BIN:=$(CURDIR)/bin
 .PHONY: .deps

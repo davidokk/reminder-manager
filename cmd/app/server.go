@@ -1,9 +1,11 @@
-package main
+package app
 
 import (
 	"context"
 	"log"
 	"net"
+
+	"gitlab.ozon.dev/davidokk/reminder-manager/internal/storage"
 
 	"gitlab.ozon.dev/davidokk/reminder-manager/config"
 
@@ -17,14 +19,15 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-func runGRPCServer() {
+// RunGRPCServer starts gRPC server
+func RunGRPCServer(storage storage.RemindersStorage) {
 	listener, err := net.Listen(config.App.GRPC.Network, config.App.GRPC.Address)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	grpcServer := grpc.NewServer()
-	pb.RegisterAdminServer(grpcServer, apiPkg.New())
+	pb.RegisterAdminServer(grpcServer, apiPkg.New(storage))
 
 	log.Println("start listening gRPC on", config.App.GRPC.Address)
 	if err = grpcServer.Serve(listener); err != nil {
@@ -32,7 +35,8 @@ func runGRPCServer() {
 	}
 }
 
-func runREST() {
+// RunREST starts HTTP
+func RunREST() {
 	ctx := context.Background()
 
 	ctx, cancel := context.WithCancel(ctx)
@@ -40,7 +44,7 @@ func runREST() {
 
 	mux := runtime.NewServeMux()
 	opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
-	if err := pb.RegisterAdminHandlerFromEndpoint(ctx, mux, config.App.REST.Endpoint, opts); err != nil {
+	if err := pb.RegisterAdminHandlerFromEndpoint(ctx, mux, config.App.HTTP.Endpoint, opts); err != nil {
 		log.Fatal(err)
 	}
 
@@ -50,8 +54,8 @@ func runREST() {
 	fs := http.FileServer(http.Dir("./swagger"))
 	hmux.Handle("/swagger/", http.StripPrefix("/swagger/", fs))
 
-	log.Println("start listening HTTP on", config.App.REST.Address)
-	if err := http.ListenAndServe(config.App.REST.Address, hmux); err != nil {
+	log.Println("start listening HTTP on", config.App.HTTP.Address)
+	if err := http.ListenAndServe(config.App.HTTP.Address, hmux); err != nil {
 		log.Fatal(err)
 	}
 }

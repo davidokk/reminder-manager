@@ -16,57 +16,7 @@
     "application/json"
   ],
   "paths": {
-    "/reminders": {
-      "get": {
-        "operationId": "Admin_ReminderList",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/ReminderListResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "tags": [
-          "Admin"
-        ]
-      },
-      "delete": {
-        "operationId": "Admin_ReminderRemove",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/ReminderRemoveResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/ReminderRemoveRequest"
-            }
-          }
-        ],
-        "tags": [
-          "Admin"
-        ]
-      },
+    "/reminder/create": {
       "post": {
         "operationId": "Admin_ReminderCreate",
         "responses": {
@@ -96,7 +46,73 @@
         "tags": [
           "Admin"
         ]
-      },
+      }
+    },
+    "/reminder/get": {
+      "post": {
+        "operationId": "Admin_ReminderGet",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/ReminderGetResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ReminderGetRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Admin"
+        ]
+      }
+    },
+    "/reminder/remove": {
+      "delete": {
+        "operationId": "Admin_ReminderRemove",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/ReminderRemoveResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ReminderRemoveRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Admin"
+        ]
+      }
+    },
+    "/reminder/update": {
       "put": {
         "operationId": "Admin_ReminderUpdate",
         "responses": {
@@ -123,6 +139,28 @@
             }
           }
         ],
+        "tags": [
+          "Admin"
+        ]
+      }
+    },
+    "/reminders": {
+      "get": {
+        "operationId": "Admin_ReminderList",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/ReminderListResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
         "tags": [
           "Admin"
         ]
@@ -159,7 +197,30 @@
       }
     },
     "ReminderCreateResponse": {
-      "type": "object"
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        }
+      }
+    },
+    "ReminderGetRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        }
+      }
+    },
+    "ReminderGetResponse": {
+      "type": "object",
+      "properties": {
+        "reminder": {
+          "$ref": "#/definitions/Reminder"
+        }
+      }
     },
     "ReminderListResponse": {
       "type": "object",

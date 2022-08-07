@@ -23,6 +23,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AdminClient interface {
 	ReminderList(ctx context.Context, in *ReminderListRequest, opts ...grpc.CallOption) (*ReminderListResponse, error)
+	ReminderGet(ctx context.Context, in *ReminderGetRequest, opts ...grpc.CallOption) (*ReminderGetResponse, error)
 	ReminderCreate(ctx context.Context, in *ReminderCreateRequest, opts ...grpc.CallOption) (*ReminderCreateResponse, error)
 	ReminderUpdate(ctx context.Context, in *ReminderUpdateRequest, opts ...grpc.CallOption) (*ReminderUpdateResponse, error)
 	ReminderRemove(ctx context.Context, in *ReminderRemoveRequest, opts ...grpc.CallOption) (*ReminderRemoveResponse, error)
@@ -39,6 +40,15 @@ func NewAdminClient(cc grpc.ClientConnInterface) AdminClient {
 func (c *adminClient) ReminderList(ctx context.Context, in *ReminderListRequest, opts ...grpc.CallOption) (*ReminderListResponse, error) {
 	out := new(ReminderListResponse)
 	err := c.cc.Invoke(ctx, "/Admin/ReminderList", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *adminClient) ReminderGet(ctx context.Context, in *ReminderGetRequest, opts ...grpc.CallOption) (*ReminderGetResponse, error) {
+	out := new(ReminderGetResponse)
+	err := c.cc.Invoke(ctx, "/Admin/ReminderGet", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -77,6 +87,7 @@ func (c *adminClient) ReminderRemove(ctx context.Context, in *ReminderRemoveRequ
 // for forward compatibility
 type AdminServer interface {
 	ReminderList(context.Context, *ReminderListRequest) (*ReminderListResponse, error)
+	ReminderGet(context.Context, *ReminderGetRequest) (*ReminderGetResponse, error)
 	ReminderCreate(context.Context, *ReminderCreateRequest) (*ReminderCreateResponse, error)
 	ReminderUpdate(context.Context, *ReminderUpdateRequest) (*ReminderUpdateResponse, error)
 	ReminderRemove(context.Context, *ReminderRemoveRequest) (*ReminderRemoveResponse, error)
@@ -89,6 +100,9 @@ type UnimplementedAdminServer struct {
 
 func (UnimplementedAdminServer) ReminderList(context.Context, *ReminderListRequest) (*ReminderListResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ReminderList not implemented")
+}
+func (UnimplementedAdminServer) ReminderGet(context.Context, *ReminderGetRequest) (*ReminderGetResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReminderGet not implemented")
 }
 func (UnimplementedAdminServer) ReminderCreate(context.Context, *ReminderCreateRequest) (*ReminderCreateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ReminderCreate not implemented")
@@ -126,6 +140,24 @@ func _Admin_ReminderList_Handler(srv interface{}, ctx context.Context, dec func(
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AdminServer).ReminderList(ctx, req.(*ReminderListRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Admin_ReminderGet_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReminderGetRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServer).ReminderGet(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/Admin/ReminderGet",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServer).ReminderGet(ctx, req.(*ReminderGetRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -194,6 +226,10 @@ var Admin_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ReminderList",
 			Handler:    _Admin_ReminderList_Handler,
+		},
+		{
+			MethodName: "ReminderGet",
+			Handler:    _Admin_ReminderGet_Handler,
 		},
 		{
 			MethodName: "ReminderCreate",

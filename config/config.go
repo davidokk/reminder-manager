@@ -12,19 +12,26 @@ import (
 // App is a group of app's configs
 var App struct {
 	Bot struct {
-		APIKey string
-	}
+		APIKey string `yaml:"apikey"`
+	} `yaml:"bot"`
 	Storage struct {
 		WaitingTime time.Duration `yaml:"waiting-time"`
 		PoolSize    uint8         `yaml:"pool-size"`
-	}
+	} `yaml:"storage"`
 	GRPC struct {
-		Network string
-		Address string
-	}
-	REST struct {
-		Endpoint string
-		Address  string
+		Network string `yaml:"network"`
+		Address string `yaml:"address"`
+	} `yaml:"grpc"`
+	HTTP struct {
+		Endpoint string `yaml:"endpoint"`
+		Address  string `yaml:"address"`
+	} `yaml:"http"`
+	Postgres struct {
+		Host     string `yaml:"host"`
+		Port     int    `yaml:"port"`
+		User     string `yaml:"user"`
+		Password string `yaml:"password"`
+		DBName   string `yaml:"db-name"`
 	}
 }
 
@@ -37,8 +44,14 @@ var required = []string{
 	"grpc:network",
 	"grpc:address",
 
-	"rest:endpoint",
-	"rest:address",
+	"http:endpoint",
+	"http:address",
+
+	"postgres:host",
+	"postgres:port",
+	"postgres:user",
+	"postgres:password",
+	"postgres:db-name",
 }
 
 func checkValid(date []byte) {
@@ -54,7 +67,7 @@ func checkValid(date []byte) {
 	}
 }
 
-// ReadConfigs gets app configs
+// ReadConfigs gets bot configs
 func ReadConfigs() {
 	file, err := os.ReadFile("config/config.yaml")
 	if err != nil {
