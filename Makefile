@@ -6,7 +6,7 @@ run:
 .PHONY: build
 build:
 	go mod download \
-    && CGO_ENABLED=0 go build -o ./bin/bot-main$(shell go env GOEXE) ./cmd/main/main.go
+    && CGO_ENABLED=0 go build -o ./bin/main$(shell go env GOEXE) ./cmd/main/main.go
 
 MIGRATIONS_DIR=./migrations
 .PHONY: migration

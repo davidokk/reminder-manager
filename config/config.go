@@ -32,7 +32,7 @@ var App struct {
 		User     string `yaml:"user"`
 		Password string `yaml:"password"`
 		DBName   string `yaml:"db-name"`
-	}
+	} `yaml:"postgres"`
 }
 
 var required = []string{
@@ -67,7 +67,7 @@ func checkValid(date []byte) {
 	}
 }
 
-// ReadConfigs gets bot configs
+// ReadConfigs gets app's configs
 func ReadConfigs() {
 	file, err := os.ReadFile("config/config.yaml")
 	if err != nil {

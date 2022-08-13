@@ -9,7 +9,7 @@ type Repository struct {
 	pool *pgxpool.Pool
 }
 
-// NewRepository connects to db and initialized new Repository
+// NewRepository initialized new Repository with pool
 func NewRepository(pool *pgxpool.Pool) *Repository {
 	return &Repository{pool}
 }
