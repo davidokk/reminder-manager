@@ -3,21 +3,24 @@ package commander
 import (
 	"log"
 
+	"gitlab.ozon.dev/davidokk/reminder-manager/internal/storage"
+
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/pkg/errors"
 )
 
 // Handler represents the telegram bot command handler function
-type Handler func(string) string
+type Handler func(string, storage.RemindersStorage) string
 
 // Commander allows you to initialize and run the telegram bot
 type Commander struct {
 	bot      *tgbotapi.BotAPI
 	handlers map[string]Handler
+	storage  storage.RemindersStorage
 }
 
 // Init connects to the bot with the given key
-func Init(apiKey string) (*Commander, error) {
+func Init(apiKey string, storage storage.RemindersStorage) (*Commander, error) {
 	bot, err := tgbotapi.NewBotAPI(apiKey)
 	if err != nil {
 		return nil, errors.Wrap(err, "init tgbot")
@@ -25,10 +28,15 @@ func Init(apiKey string) (*Commander, error) {
 
 	log.Printf("Authorized on account %s", bot.Self.UserName)
 
-	return &Commander{
+	cmd := &Commander{
 		bot:      bot,
 		handlers: make(map[string]Handler),
-	}, nil
+		storage:  storage,
+	}
+
+	AddHandlers(cmd)
+
+	return cmd, nil
 }
 
 const unknownCommandResponse = "Unknown command. Type /help to see the list"
@@ -51,7 +59,7 @@ func (cmd *Commander) Run() error {
 
 			if cmdName := update.Message.Command(); cmdName != "" {
 				if handler, ok := cmd.handlers[cmdName]; ok {
-					msg.Text = handler(update.Message.CommandArguments())
+					msg.Text = handler(update.Message.CommandArguments(), cmd.storage)
 				} else {
 					msg.Text = unknownCommandResponse
 				}

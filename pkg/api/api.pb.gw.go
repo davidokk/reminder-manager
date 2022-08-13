@@ -49,6 +49,58 @@ func local_request_Admin_ReminderList_0(ctx context.Context, marshaler runtime.M
 
 }
 
+func request_Admin_ReminderGet_0(ctx context.Context, marshaler runtime.Marshaler, client AdminClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq ReminderGetRequest
+	var metadata runtime.ServerMetadata
+
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["id"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id")
+	}
+
+	protoReq.Id, err = runtime.Uint64(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
+	}
+
+	msg, err := client.ReminderGet(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+
+}
+
+func local_request_Admin_ReminderGet_0(ctx context.Context, marshaler runtime.Marshaler, server AdminServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq ReminderGetRequest
+	var metadata runtime.ServerMetadata
+
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["id"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id")
+	}
+
+	protoReq.Id, err = runtime.Uint64(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
+	}
+
+	msg, err := server.ReminderGet(ctx, &protoReq)
+	return msg, metadata, err
+
+}
+
 func request_Admin_ReminderCreate_0(ctx context.Context, marshaler runtime.Marshaler, client AdminClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq ReminderCreateRequest
 	var metadata runtime.ServerMetadata
@@ -181,6 +233,30 @@ func RegisterAdminHandlerServer(ctx context.Context, mux *runtime.ServeMux, serv
 
 	})
 
+	mux.Handle("GET", pattern_Admin_ReminderGet_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		var stream runtime.ServerTransportStream
+		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		var err error
+		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/.Admin/ReminderGet", runtime.WithHTTPPathPattern("/reminder/{id}/get"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_Admin_ReminderGet_0(ctx, inboundMarshaler, server, req, pathParams)
+		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
+		ctx = runtime.NewServerMetadataContext(ctx, md)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_Admin_ReminderGet_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
 	mux.Handle("POST", pattern_Admin_ReminderCreate_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
@@ -188,7 +264,7 @@ func RegisterAdminHandlerServer(ctx context.Context, mux *runtime.ServeMux, serv
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
-		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/.Admin/ReminderCreate", runtime.WithHTTPPathPattern("/reminders"))
+		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/.Admin/ReminderCreate", runtime.WithHTTPPathPattern("/reminder/create"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -212,7 +288,7 @@ func RegisterAdminHandlerServer(ctx context.Context, mux *runtime.ServeMux, serv
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
-		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/.Admin/ReminderUpdate", runtime.WithHTTPPathPattern("/reminders"))
+		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/.Admin/ReminderUpdate", runtime.WithHTTPPathPattern("/reminder/update"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -236,7 +312,7 @@ func RegisterAdminHandlerServer(ctx context.Context, mux *runtime.ServeMux, serv
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
-		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/.Admin/ReminderRemove", runtime.WithHTTPPathPattern("/reminders"))
+		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/.Admin/ReminderRemove", runtime.WithHTTPPathPattern("/reminder/remove"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -315,12 +391,33 @@ func RegisterAdminHandlerClient(ctx context.Context, mux *runtime.ServeMux, clie
 
 	})
 
+	mux.Handle("GET", pattern_Admin_ReminderGet_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		var err error
+		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/.Admin/ReminderGet", runtime.WithHTTPPathPattern("/reminder/{id}/get"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_Admin_ReminderGet_0(ctx, inboundMarshaler, client, req, pathParams)
+		ctx = runtime.NewServerMetadataContext(ctx, md)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_Admin_ReminderGet_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
 	mux.Handle("POST", pattern_Admin_ReminderCreate_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
-		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/.Admin/ReminderCreate", runtime.WithHTTPPathPattern("/reminders"))
+		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/.Admin/ReminderCreate", runtime.WithHTTPPathPattern("/reminder/create"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -341,7 +438,7 @@ func RegisterAdminHandlerClient(ctx context.Context, mux *runtime.ServeMux, clie
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
-		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/.Admin/ReminderUpdate", runtime.WithHTTPPathPattern("/reminders"))
+		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/.Admin/ReminderUpdate", runtime.WithHTTPPathPattern("/reminder/update"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -362,7 +459,7 @@ func RegisterAdminHandlerClient(ctx context.Context, mux *runtime.ServeMux, clie
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
-		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/.Admin/ReminderRemove", runtime.WithHTTPPathPattern("/reminders"))
+		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/.Admin/ReminderRemove", runtime.WithHTTPPathPattern("/reminder/remove"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -384,15 +481,19 @@ func RegisterAdminHandlerClient(ctx context.Context, mux *runtime.ServeMux, clie
 var (
 	pattern_Admin_ReminderList_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"reminders"}, ""))
 
-	pattern_Admin_ReminderCreate_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"reminders"}, ""))
+	pattern_Admin_ReminderGet_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 1, 0, 4, 1, 5, 1, 2, 2}, []string{"reminder", "id", "get"}, ""))
 
-	pattern_Admin_ReminderUpdate_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"reminders"}, ""))
+	pattern_Admin_ReminderCreate_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"reminder", "create"}, ""))
 
-	pattern_Admin_ReminderRemove_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"reminders"}, ""))
+	pattern_Admin_ReminderUpdate_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"reminder", "update"}, ""))
+
+	pattern_Admin_ReminderRemove_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"reminder", "remove"}, ""))
 )
 
 var (
 	forward_Admin_ReminderList_0 = runtime.ForwardResponseMessage
+
+	forward_Admin_ReminderGet_0 = runtime.ForwardResponseMessage
 
 	forward_Admin_ReminderCreate_0 = runtime.ForwardResponseMessage
 
