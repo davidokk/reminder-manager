@@ -20,7 +20,7 @@ var expectedDate = time.Date(2022, 8, 21, 0, 0, 0, 0, time.UTC)
 
 func TestCreateReminder(t *testing.T) {
 	f := setUp()
-	defer f.tearDown()
+	defer f.tearDown(t)
 
 	query := regexp.QuoteMeta(`INSERT INTO reminders (date, text) VALUES ($1,$2) RETURNING id`)
 	f.pool.ExpectQuery(query).
@@ -39,7 +39,7 @@ func TestCreateReminder(t *testing.T) {
 
 func TestListReminders(t *testing.T) {
 	f := setUp()
-	defer f.tearDown()
+	defer f.tearDown(t)
 
 	query := regexp.QuoteMeta(`SELECT * FROM reminders ORDER BY date`)
 	f.pool.ExpectQuery(query).
@@ -66,7 +66,7 @@ func TestListReminders(t *testing.T) {
 func TestGetReminder(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		f := setUp()
-		defer f.tearDown()
+		defer f.tearDown(t)
 
 		var ID uint64 = 4
 
@@ -86,7 +86,7 @@ func TestGetReminder(t *testing.T) {
 
 	t.Run("error", func(t *testing.T) {
 		f := setUp()
-		defer f.tearDown()
+		defer f.tearDown(t)
 
 		var ID uint64 = 4
 
@@ -102,7 +102,7 @@ func TestGetReminder(t *testing.T) {
 func TestUpdateReminder(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		f := setUp()
-		defer f.tearDown()
+		defer f.tearDown(t)
 
 		var ID uint64 = 4
 
@@ -120,16 +120,13 @@ func TestUpdateReminder(t *testing.T) {
 
 	t.Run("error", func(t *testing.T) {
 		f := setUp()
-		defer f.tearDown()
+		defer f.tearDown(t)
 
 		var ID uint64 = 4
 
 		getQuery := regexp.QuoteMeta(`SELECT id, date, text FROM reminders WHERE id = $1`)
 		f.pool.ExpectQuery(getQuery).WithArgs(ID).
 			WillReturnRows(pgxmock.NewRows([]string{"id", "date", "text"}))
-
-		updateQuery := regexp.QuoteMeta(`UPDATE reminders SET text = $1 WHERE id = $2`)
-		f.pool.ExpectExec(updateQuery).WithArgs(expectedText, ID).WillReturnResult(pgconn.CommandTag{})
 
 		err := f.repository.UpdateReminder(context.Background(), ID, expectedText)
 
@@ -140,7 +137,7 @@ func TestUpdateReminder(t *testing.T) {
 func TestRemoveReminder(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		f := setUp()
-		defer f.tearDown()
+		defer f.tearDown(t)
 
 		var ID uint64 = 4
 
@@ -158,16 +155,13 @@ func TestRemoveReminder(t *testing.T) {
 
 	t.Run("error", func(t *testing.T) {
 		f := setUp()
-		defer f.tearDown()
+		defer f.tearDown(t)
 
 		var ID uint64 = 4
 
 		getQuery := regexp.QuoteMeta(`SELECT id, date, text FROM reminders WHERE id = $1`)
 		f.pool.ExpectQuery(getQuery).WithArgs(ID).
 			WillReturnRows(pgxmock.NewRows([]string{"id", "date", "text"}))
-
-		updateQuery := regexp.QuoteMeta(`DELETE FROM reminders WHERE id = $1`)
-		f.pool.ExpectExec(updateQuery).WithArgs(ID).WillReturnResult(pgconn.CommandTag{})
 
 		err := f.repository.RemoveReminder(context.Background(), ID)
 

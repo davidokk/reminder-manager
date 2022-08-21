@@ -1,9 +1,9 @@
 package postgres
 
 import (
-	"log"
-
 	"github.com/pashagolub/pgxmock"
+	"log"
+	"testing"
 )
 
 type repositoryFixtures struct {
@@ -22,6 +22,9 @@ func setUp() repositoryFixtures {
 	return f
 }
 
-func (f *repositoryFixtures) tearDown() {
+func (f *repositoryFixtures) tearDown(t *testing.T) {
+	if err := f.pool.ExpectationsWereMet(); err != nil {
+		t.Errorf("unfulfilled expectations: %s", err)
+	}
 	f.repository.Close()
 }
