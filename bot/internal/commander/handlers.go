@@ -54,16 +54,19 @@ func AddHandlers(cmd *Commander) {
 func getFunc(str string, client pb.InterfaceClient) string {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
 	id, err := strconv.ParseUint(str, 10, 64)
 	if err != nil {
 		return badArgumentResponse
 	}
+
 	response, err := client.ReminderGet(ctx, &pb.ReminderGetRequest{
 		Id: id,
 	})
 	if err != nil {
 		return err.Error()
 	}
+
 	reminder := models.Reminder{
 		ID:   response.GetReminder().GetId(),
 		Date: utils.TimestampToTime(response.GetReminder().GetDate()),
@@ -75,11 +78,13 @@ func getFunc(str string, client pb.InterfaceClient) string {
 func updateFunc(str string, client pb.InterfaceClient) string {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
 	params := strings.Split(str, " ")
 	id, err := strconv.ParseUint(params[0], 10, 64)
 	if err != nil || len(params) < 2 {
 		return badArgumentResponse
 	}
+
 	if _, err := client.ReminderUpdate(ctx, &pb.ReminderUpdateRequest{
 		Id:   id,
 		Text: strings.Join(params[1:], " "),
@@ -92,10 +97,12 @@ func updateFunc(str string, client pb.InterfaceClient) string {
 func removeFunc(params string, client pb.InterfaceClient) string {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
 	id, err := strconv.ParseUint(params, 10, 64)
 	if err != nil {
 		return badArgumentResponse
 	}
+
 	if _, err := client.ReminderRemove(ctx, &pb.ReminderRemoveRequest{
 		Id: id,
 	}); err != nil {
@@ -107,6 +114,7 @@ func removeFunc(params string, client pb.InterfaceClient) string {
 func listFunc(str string, client pb.InterfaceClient) string {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
 	response, err := client.ReminderList(ctx, &pb.ReminderListRequest{})
 	if err != nil {
 		return err.Error()
@@ -114,6 +122,7 @@ func listFunc(str string, client pb.InterfaceClient) string {
 	if len(response.GetReminders()) == 0 {
 		return "You haven't planned anything yet"
 	}
+
 	res := make([]string, 0, len(response.GetReminders()))
 	for _, i := range response.GetReminders() {
 		rem := models.Reminder{
@@ -129,19 +138,22 @@ func listFunc(str string, client pb.InterfaceClient) string {
 func addFunc(str string, client pb.InterfaceClient) string {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
 	params := strings.Split(str, " ")
 	var date time.Time
-	if params[0] == "today" {
+	switch params[0] {
+	case "today":
 		date = utils.UpToDay(time.Now())
-	} else if params[0] == "tomorrow" {
+	case "tomorrow":
 		date = utils.UpToDay(time.Now()).Add(time.Hour * 24)
-	} else {
+	default:
 		var err error
 		date, err = time.Parse("02.01.06", params[0])
 		if err != nil || len(params) < 2 {
 			return badArgumentResponse
 		}
 	}
+
 	response, err := client.ReminderCreate(ctx, &pb.ReminderCreateRequest{
 		Date: utils.TimeToTimestamp(date),
 		Text: strings.Join(params[1:], " "),
