@@ -1,16 +1,27 @@
 package postgres
 
 import (
-	"github.com/jackc/pgx/v4/pgxpool"
+	"context"
+
+	"github.com/jackc/pgconn"
+	"github.com/jackc/pgx/v4"
 )
+
+type poolInterface interface {
+	Query(ctx context.Context, sql string, args ...interface{}) (pgx.Rows, error)
+	QueryRow(ctx context.Context, sql string, args ...interface{}) pgx.Row
+	Exec(ctx context.Context, sql string, arguments ...interface{}) (pgconn.CommandTag, error)
+
+	Close()
+}
 
 // Repository provides work with postgres
 type Repository struct {
-	pool *pgxpool.Pool
+	pool poolInterface
 }
 
 // NewRepository initialized new Repository with pool
-func NewRepository(pool *pgxpool.Pool) *Repository {
+func NewRepository(pool poolInterface) *Repository {
 	return &Repository{pool}
 }
 

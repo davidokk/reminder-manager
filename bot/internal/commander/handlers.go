@@ -33,7 +33,7 @@ var description = map[string]string{
 }
 
 const badArgumentResponse = "Bad argument, try one more time"
-const successResponse = "Success! =)"
+const successResponse = "Success!"
 
 // AddHandlers registers handlers for given Commander
 func AddHandlers(cmd *Commander) {
