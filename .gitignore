@@ -1,5 +1,9 @@
 /.idea
 /bin
-/postgresql
-config/config.yaml
-.env
+
+data-service/.env
+data-service/postgresql
+
+data-service/config/config.yaml
+interface-service/config/config.yaml
+bot/config/config.yaml
