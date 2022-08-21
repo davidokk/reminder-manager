@@ -1,6 +1,9 @@
 package api
 
 import (
+	"testing"
+	"time"
+
 	"github.com/golang/mock/gomock"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
@@ -8,8 +11,6 @@ import (
 	"gitlab.ozon.dev/davidokk/reminder-manager/data-service/internal/models"
 	"gitlab.ozon.dev/davidokk/reminder-manager/data-service/pkg/api"
 	"gitlab.ozon.dev/davidokk/reminder-manager/utils"
-	"testing"
-	"time"
 )
 
 var ID uint64 = 1

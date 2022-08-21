@@ -1,9 +1,10 @@
 package postgres
 
 import (
-	"github.com/pashagolub/pgxmock"
 	"log"
 	"testing"
+
+	"github.com/pashagolub/pgxmock"
 )
 
 type repositoryFixtures struct {

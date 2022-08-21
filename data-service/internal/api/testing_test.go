@@ -2,9 +2,10 @@ package api
 
 import (
 	"context"
+	"testing"
+
 	"github.com/golang/mock/gomock"
 	mockstorage "gitlab.ozon.dev/davidokk/reminder-manager/data-service/internal/storage/mocks"
-	"testing"
 )
 
 type serviceFixture struct {
