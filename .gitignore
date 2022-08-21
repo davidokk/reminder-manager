@@ -4,6 +4,7 @@
 data-service/.env
 data-service/postgresql
 
+data-service/tests/config/config.yaml
 data-service/config/config.yaml
 interface-service/config/config.yaml
 bot/config/config.yaml
