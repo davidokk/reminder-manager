@@ -1,3 +1,5 @@
+//go:generate mockgen -source ./storage.go -destination=./mocks/storage.go -package=mockstorage
+
 package storage
 
 import (

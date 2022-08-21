@@ -13,7 +13,7 @@ import (
 )
 
 // New returns an implementation of proto DataServer
-func New(storage storage.RemindersStorage) api.DataServer {
+func New(storage storage.RemindersStorage) *implementation {
 	return &implementation{
 		storage: storage,
 	}

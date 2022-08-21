@@ -9,7 +9,7 @@ import (
 
 // TimestampToTime converts *timestamp.Timestamp to time.Time
 func TimestampToTime(tm *timestamp.Timestamp) time.Time {
-	return time.Unix(tm.Seconds, int64(tm.Nanos))
+	return UpToDay(time.Unix(tm.Seconds, int64(tm.Nanos)))
 }
 
 // TimeToTimestamp converts time.Time to *timestamp.Timestamp
