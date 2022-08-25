@@ -13,19 +13,19 @@ import (
 	"gitlab.ozon.dev/davidokk/reminder-manager/utils"
 )
 
-var ID uint64 = 1
-var text = "test"
-var date = utils.UpToDay(time.Now())
+var expectedID uint64 = 1
+var expectedText = "test"
+var expectedDate = utils.UpToDay(time.Now())
 
 func TestReminderList(t *testing.T) {
-	t.Run("success", func(t *testing.T) {
+	t.Run("returns reminders list", func(t *testing.T) {
 		f := setUp(t)
 
 		f.storage.EXPECT().ListReminders(gomock.Any()).Return([]*models.Reminder{
 			{
-				Text: text,
-				Date: date,
-				ID:   ID,
+				Text: expectedText,
+				Date: expectedDate,
+				ID:   expectedID,
 			},
 		}, nil)
 
@@ -35,15 +35,15 @@ func TestReminderList(t *testing.T) {
 		assert.Equal(t, resp, &api.ReminderListResponse{
 			Reminders: []*api.Reminder{
 				{
-					Id:   ID,
-					Text: text,
-					Date: utils.TimeToTimestamp(date),
+					Id:   expectedID,
+					Text: expectedText,
+					Date: utils.TimeToTimestamp(expectedDate),
 				},
 			},
 		})
 	})
 
-	t.Run("error", func(t *testing.T) {
+	t.Run("handle error from storage", func(t *testing.T) {
 		f := setUp(t)
 
 		f.storage.EXPECT().ListReminders(gomock.Any()).Return(nil, errors.New(""))
@@ -51,45 +51,47 @@ func TestReminderList(t *testing.T) {
 		resp, err := f.service.ReminderList(f.ctx, &api.ReminderListRequest{})
 
 		require.Error(t, err)
-		assert.Equal(t, resp, (*api.ReminderListResponse)(nil))
+		assert.EqualError(t, err, "rpc error: code = Internal desc = ")
+		assert.Nil(t, resp)
 	})
 }
 
 func TestReminderGet(t *testing.T) {
-	t.Run("success", func(t *testing.T) {
+	t.Run("get existing element", func(t *testing.T) {
 		f := setUp(t)
 
-		f.storage.EXPECT().GetReminder(gomock.Any(), ID).Return(&models.Reminder{
-			ID:   ID,
-			Text: text,
-			Date: date,
+		f.storage.EXPECT().GetReminder(gomock.Any(), expectedID).Return(&models.Reminder{
+			ID:   expectedID,
+			Text: expectedText,
+			Date: expectedDate,
 		}, nil)
 
 		resp, err := f.service.ReminderGet(f.ctx, &api.ReminderGetRequest{
-			Id: ID,
+			Id: expectedID,
 		})
 
 		require.NoError(t, err)
 		assert.Equal(t, resp, &api.ReminderGetResponse{
 			Reminder: &api.Reminder{
-				Id:   ID,
-				Text: text,
-				Date: utils.TimeToTimestamp(date),
+				Id:   expectedID,
+				Text: expectedText,
+				Date: utils.TimeToTimestamp(expectedDate),
 			},
 		})
 	})
 
-	t.Run("error", func(t *testing.T) {
+	t.Run("get non existing element", func(t *testing.T) {
 		f := setUp(t)
 
-		f.storage.EXPECT().GetReminder(gomock.Any(), ID).Return(nil, errors.New(""))
+		f.storage.EXPECT().GetReminder(gomock.Any(), expectedID).Return(nil, errors.New(""))
 
 		resp, err := f.service.ReminderGet(f.ctx, &api.ReminderGetRequest{
-			Id: ID,
+			Id: expectedID,
 		})
 
 		require.Error(t, err)
-		assert.Equal(t, resp, (*api.ReminderGetResponse)(nil))
+		assert.EqualError(t, err, "rpc error: code = Internal desc = ")
+		assert.Nil(t, resp)
 	})
 }
 
@@ -97,92 +99,95 @@ func TestReminderCreate(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		f := setUp(t)
 
-		f.storage.EXPECT().CreateReminder(gomock.Any(), date, text).Return(&models.Reminder{
-			ID:   ID,
-			Text: text,
-			Date: date,
+		f.storage.EXPECT().CreateReminder(gomock.Any(), expectedDate, expectedText).Return(&models.Reminder{
+			ID:   expectedID,
+			Text: expectedText,
+			Date: expectedDate,
 		}, nil)
 
 		resp, err := f.service.ReminderCreate(f.ctx, &api.ReminderCreateRequest{
-			Text: text,
-			Date: utils.TimeToTimestamp(date),
+			Text: expectedText,
+			Date: utils.TimeToTimestamp(expectedDate),
 		})
 
 		require.NoError(t, err)
 		assert.Equal(t, resp, &api.ReminderCreateResponse{
-			Id: ID,
+			Id: expectedID,
 		})
 	})
 
-	t.Run("error", func(t *testing.T) {
+	t.Run("handle error from storage", func(t *testing.T) {
 		f := setUp(t)
 
-		f.storage.EXPECT().CreateReminder(gomock.Any(), date, text).Return(nil, errors.New("some error"))
+		f.storage.EXPECT().CreateReminder(gomock.Any(), expectedDate, expectedText).Return(nil, errors.New(""))
 
 		resp, err := f.service.ReminderCreate(f.ctx, &api.ReminderCreateRequest{
-			Text: text,
-			Date: utils.TimeToTimestamp(date),
+			Text: expectedText,
+			Date: utils.TimeToTimestamp(expectedDate),
 		})
 
 		require.Error(t, err)
-		assert.Equal(t, resp, (*api.ReminderCreateResponse)(nil))
+		assert.EqualError(t, err, "rpc error: code = Internal desc = ")
+		assert.Nil(t, resp)
 	})
 }
 
 func TestReminderUpdate(t *testing.T) {
-	t.Run("success", func(t *testing.T) {
+	t.Run("update existing element", func(t *testing.T) {
 		f := setUp(t)
 
-		f.storage.EXPECT().UpdateReminder(gomock.Any(), ID, text).Return(nil)
+		f.storage.EXPECT().UpdateReminder(gomock.Any(), expectedID, expectedText).Return(nil)
 
 		resp, err := f.service.ReminderUpdate(f.ctx, &api.ReminderUpdateRequest{
-			Text: text,
-			Id:   ID,
+			Text: expectedText,
+			Id:   expectedID,
 		})
 
 		require.NoError(t, err)
 		assert.Equal(t, resp, &api.ReminderUpdateResponse{})
 	})
 
-	t.Run("error", func(t *testing.T) {
+	t.Run("update non existing element", func(t *testing.T) {
 		f := setUp(t)
 
-		f.storage.EXPECT().UpdateReminder(gomock.Any(), ID, text).Return(errors.New(""))
+		f.storage.EXPECT().UpdateReminder(gomock.Any(), expectedID, expectedText).Return(errors.New(""))
 
 		resp, err := f.service.ReminderUpdate(f.ctx, &api.ReminderUpdateRequest{
-			Text: text,
-			Id:   ID,
+			Text: expectedText,
+			Id:   expectedID,
 		})
 
 		require.Error(t, err)
-		assert.Equal(t, resp, (*api.ReminderUpdateResponse)(nil))
+		assert.EqualError(t, err, "rpc error: code = Internal desc = ")
+		assert.Nil(t, resp)
 	})
 }
 
 func TestReminderRemove(t *testing.T) {
-	t.Run("success", func(t *testing.T) {
+	t.Run("remove existing element", func(t *testing.T) {
 		f := setUp(t)
 
-		f.storage.EXPECT().RemoveReminder(gomock.Any(), ID).Return(nil)
+		f.storage.EXPECT().RemoveReminder(gomock.Any(), expectedID).Return(nil)
 
 		resp, err := f.service.ReminderRemove(f.ctx, &api.ReminderRemoveRequest{
-			Id: ID,
+			Id: expectedID,
 		})
 
 		require.NoError(t, err)
 		assert.Equal(t, resp, &api.ReminderRemoveResponse{})
 	})
 
-	t.Run("error", func(t *testing.T) {
+	t.Run("remove non existing element", func(t *testing.T) {
 		f := setUp(t)
 
-		f.storage.EXPECT().RemoveReminder(gomock.Any(), ID).Return(errors.New(""))
+		f.storage.EXPECT().RemoveReminder(gomock.Any(), expectedID).Return(errors.New(""))
 
 		resp, err := f.service.ReminderRemove(f.ctx, &api.ReminderRemoveRequest{
-			Id: ID,
+			Id: expectedID,
 		})
 
 		require.Error(t, err)
-		assert.Equal(t, resp, (*api.ReminderRemoveResponse)(nil))
+		assert.EqualError(t, err, "rpc error: code = Internal desc = ")
+		assert.Nil(t, resp)
 	})
 }

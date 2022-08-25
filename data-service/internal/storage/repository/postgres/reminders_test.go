@@ -64,7 +64,7 @@ func TestListReminders(t *testing.T) {
 }
 
 func TestGetReminder(t *testing.T) {
-	t.Run("success", func(t *testing.T) {
+	t.Run("get existing element", func(t *testing.T) {
 		f := setUp()
 		defer f.tearDown(t)
 
@@ -84,7 +84,7 @@ func TestGetReminder(t *testing.T) {
 		})
 	})
 
-	t.Run("error", func(t *testing.T) {
+	t.Run("get non existing element", func(t *testing.T) {
 		f := setUp()
 		defer f.tearDown(t)
 
@@ -96,11 +96,12 @@ func TestGetReminder(t *testing.T) {
 		_, err := f.repository.GetReminder(context.Background(), ID)
 
 		require.Error(t, err)
+		assert.EqualError(t, err, "no rows in result set")
 	})
 }
 
 func TestUpdateReminder(t *testing.T) {
-	t.Run("success", func(t *testing.T) {
+	t.Run("update existing element", func(t *testing.T) {
 		f := setUp()
 		defer f.tearDown(t)
 
@@ -118,7 +119,7 @@ func TestUpdateReminder(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	t.Run("error", func(t *testing.T) {
+	t.Run("update non existing element", func(t *testing.T) {
 		f := setUp()
 		defer f.tearDown(t)
 
@@ -131,11 +132,12 @@ func TestUpdateReminder(t *testing.T) {
 		err := f.repository.UpdateReminder(context.Background(), ID, expectedText)
 
 		require.Error(t, err)
+		assert.EqualError(t, err, "can't find given id")
 	})
 }
 
 func TestRemoveReminder(t *testing.T) {
-	t.Run("success", func(t *testing.T) {
+	t.Run("remove existing element", func(t *testing.T) {
 		f := setUp()
 		defer f.tearDown(t)
 
@@ -153,7 +155,7 @@ func TestRemoveReminder(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	t.Run("error", func(t *testing.T) {
+	t.Run("remove non existing element", func(t *testing.T) {
 		f := setUp()
 		defer f.tearDown(t)
 
@@ -166,5 +168,6 @@ func TestRemoveReminder(t *testing.T) {
 		err := f.repository.RemoveReminder(context.Background(), ID)
 
 		require.Error(t, err)
+		assert.EqualError(t, err, "can't find given id")
 	})
 }
