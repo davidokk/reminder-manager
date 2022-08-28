@@ -31,6 +31,7 @@ var App struct {
 		ConsumerGroupID   string   `yaml:"consumer-group-id"`
 		Brokers           []string `yaml:"brokers"`
 	} `yaml:"kafka"`
+	PprofAddress string `yaml:"pprof-address"`
 }
 
 // ReadConfigs gets app's configs

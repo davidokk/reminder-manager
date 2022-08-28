@@ -7,6 +7,8 @@ import (
 	"log"
 	"time"
 
+	"github.com/pkg/errors"
+
 	"github.com/Shopify/sarama"
 	"gitlab.ozon.dev/davidokk/reminder-manager/data-service/config"
 	"gitlab.ozon.dev/davidokk/reminder-manager/data-service/internal/producer"
@@ -16,8 +18,6 @@ import (
 // Run starts consumer reads messages from data incoming topic
 func Run(cfg *sarama.Config, storage storage.RemindersStorage) {
 	ctx := context.Background()
-
-	cfg.Consumer.Offsets.Initial = sarama.OffsetOldest
 
 	client, err := sarama.NewConsumerGroup(config.App.Kafka.Brokers, config.App.Kafka.ConsumerGroupID, cfg)
 	if err != nil {
@@ -54,7 +54,9 @@ func (c *consumer) ConsumeClaim(session sarama.ConsumerGroupSession, claim saram
 	for msg := range claim.Messages() {
 		params := make(map[string]string)
 		if err := json.Unmarshal(msg.Value, &params); err != nil {
-			log.Printf("unmarshal error: %s\n", err.Error())
+			w := errors.Wrap(err, "unmarshal params error")
+			log.Print(w)
+			messagesErrors.Inc(w.Error())
 		}
 
 		ctx := context.Background()
@@ -64,16 +66,24 @@ func (c *consumer) ConsumeClaim(session sarama.ConsumerGroupSession, claim saram
 		case "update":
 			if err := update(ctx, c.storage, params); err != nil {
 				response = fmt.Sprintf("error: %s", err.Error())
+				messagesErrors.Inc(err.Error())
+			} else {
+				successfullyProcessedMessages.Inc()
 			}
 		case "remove":
 			if err := remove(ctx, c.storage, params); err != nil {
 				response = fmt.Sprintf("error: %s", err.Error())
+				messagesErrors.Inc(err.Error())
+			} else {
+				successfullyProcessedMessages.Inc()
 			}
 		case "create":
 			if ID, err := create(ctx, c.storage, params); err != nil {
 				response = fmt.Sprintf("error: %s", err.Error())
+				messagesErrors.Inc(err.Error())
 			} else {
 				response = fmt.Sprintf("succes, id = %d", ID)
+				successfullyProcessedMessages.Inc()
 			}
 		}
 
@@ -82,6 +92,7 @@ func (c *consumer) ConsumeClaim(session sarama.ConsumerGroupSession, claim saram
 			Key:   sarama.ByteEncoder(msg.Key),
 			Value: sarama.StringEncoder(response),
 		}
+		responsesGiven.Inc()
 	}
 	return nil
 }
