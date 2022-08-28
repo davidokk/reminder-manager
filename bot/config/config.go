@@ -15,6 +15,12 @@ var App struct {
 	InterfaceService struct {
 		Address string `yaml:"address"`
 	} `yaml:"interface-service"`
+	Kafka struct {
+		DataResponseTopic string   `yaml:"data-response-topic"`
+		ConsumerGroupID   string   `yaml:"consumer-group-id"`
+		Brokers           []string `yaml:"brokers"`
+		ConsumerEndpoint  int64    `yaml:"consumer-endpoint"`
+	} `yaml:"kafka"`
 }
 
 // ReadConfigs gets app's configs

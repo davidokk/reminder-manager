@@ -1,7 +1,12 @@
 package commander
 
 import (
+	"context"
 	"log"
+	"time"
+
+	"github.com/Shopify/sarama"
+	"gitlab.ozon.dev/davidokk/reminder-manager/bot/config"
 
 	pb "gitlab.ozon.dev/davidokk/reminder-manager/bot/pkg/api"
 
@@ -75,6 +80,29 @@ func (cmd *Commander) Run() error {
 	}
 
 	return nil
+}
+
+// RunConsumer stars consumer reads messages from data responses topic
+func (cmd *Commander) RunConsumer() {
+	ctx := context.Background()
+
+	cfg := sarama.NewConfig()
+
+	client, err := sarama.NewConsumerGroup(config.App.Kafka.Brokers, config.App.Kafka.ConsumerGroupID, cfg)
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+
+	consumer := &consumer{
+		bot: cmd.bot,
+	}
+
+	for {
+		if err := client.Consume(ctx, []string{config.App.Kafka.DataResponseTopic}, consumer); err != nil {
+			log.Printf("on consume: %v", err)
+			time.Sleep(time.Second * 2)
+		}
+	}
 }
 
 // RegisterHandler adds a new Handler into Commander

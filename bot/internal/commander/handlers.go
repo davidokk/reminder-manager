@@ -33,7 +33,7 @@ var description = map[string]string{
 }
 
 const badArgumentResponse = "Bad argument, try one more time"
-const successResponse = "Success!"
+const successResponse = "All right, request accepted..."
 
 // AddHandlers registers handlers for given Commander
 func AddHandlers(cmd *Commander) {
@@ -154,12 +154,12 @@ func addFunc(str string, client pb.InterfaceClient) string {
 		}
 	}
 
-	response, err := client.ReminderCreate(ctx, &pb.ReminderCreateRequest{
+	_, err := client.ReminderCreate(ctx, &pb.ReminderCreateRequest{
 		Date: utils.TimeToTimestamp(date),
 		Text: strings.Join(params[1:], " "),
 	})
 	if err != nil {
 		return err.Error()
 	}
-	return successResponse + fmt.Sprintf(" ID %d", response.GetId())
+	return successResponse
 }

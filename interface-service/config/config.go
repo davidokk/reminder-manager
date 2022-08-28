@@ -23,6 +23,10 @@ var App struct {
 	DataService struct {
 		Address string `yaml:"address"`
 	} `yaml:"data-service"`
+	Kafka struct {
+		DataIncomingTopic string   `yaml:"data-incoming-topic"`
+		Brokers           []string `yaml:"brokers"`
+	} `yaml:"kafka"`
 }
 
 // ReadConfigs gets app's configs
