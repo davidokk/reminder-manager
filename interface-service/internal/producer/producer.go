@@ -7,6 +7,7 @@ import (
 	"gitlab.ozon.dev/davidokk/reminder-manager/interface-service/config"
 )
 
+// New initialized new sarama.AsyncProducer
 func New() sarama.AsyncProducer {
 	cfg := sarama.NewConfig()
 	cfg.Producer.Return.Successes = true
