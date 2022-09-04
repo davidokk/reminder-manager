@@ -4,6 +4,8 @@ import (
 	"log"
 	"net/http"
 
+	"gitlab.ozon.dev/davidokk/reminder-manager/data-service/internal/storage/cached"
+
 	"github.com/Shopify/sarama"
 	"gitlab.ozon.dev/davidokk/reminder-manager/data-service/cmd/app"
 	"gitlab.ozon.dev/davidokk/reminder-manager/data-service/config"
@@ -15,8 +17,10 @@ import (
 func main() {
 	config.ReadConfigs()
 
-	storage := app.ConnectRepository()
-	defer storage.Close()
+	repo := app.ConnectRepository()
+	defer repo.Close()
+
+	storage := cached.New(repo)
 
 	go func() {
 		err := http.ListenAndServe(config.App.PprofAddress, nil)

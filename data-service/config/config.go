@@ -32,6 +32,10 @@ var App struct {
 		Brokers           []string `yaml:"brokers"`
 	} `yaml:"kafka"`
 	PprofAddress string `yaml:"pprof-address"`
+	Cache        struct {
+		Address    string        `yaml:"address"`
+		Expiration time.Duration `yaml:"expiration"`
+	} `yaml:"cache"`
 }
 
 // ReadConfigs gets app's configs
