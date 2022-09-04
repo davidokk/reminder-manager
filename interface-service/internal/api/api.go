@@ -2,7 +2,12 @@ package api
 
 import (
 	"context"
+	"strconv"
 	"time"
+
+	"github.com/Shopify/sarama"
+	"gitlab.ozon.dev/davidokk/reminder-manager/interface-service/config"
+	"gitlab.ozon.dev/davidokk/reminder-manager/interface-service/internal/producer"
 
 	"github.com/pkg/errors"
 	"gitlab.ozon.dev/davidokk/reminder-manager/interface-service/internal/models"
@@ -10,17 +15,22 @@ import (
 	"gitlab.ozon.dev/davidokk/reminder-manager/utils"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"encoding/json"
 )
 
 // New returns an implementation of proto InterfaceServer
 func New(client pb.DataClient) pb.InterfaceServer {
 	return &implementation{
 		dataService: client,
+		producer:    producer.New(),
 	}
 }
 
 type implementation struct {
 	dataService pb.DataClient
+	producer    sarama.AsyncProducer
+
 	pb.UnsafeInterfaceServer
 }
 
@@ -56,17 +66,19 @@ func (i *implementation) ReminderCreate(ctx context.Context, in *pb.ReminderCrea
 	if err := reminder.Valid(); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-	response, err := i.dataService.ReminderCreate(ctx, &pb.ReminderCreateRequest{
-		Date: in.GetDate(),
-		Text: in.GetText(),
-	})
-	if err != nil {
-		if errors.Is(err, context.DeadlineExceeded) {
-			return nil, status.Error(codes.DeadlineExceeded, err.Error())
-		}
-		return nil, status.Error(codes.Internal, err.Error())
+
+	params := make(map[string]string)
+	params["date"] = utils.TimestampToTime(in.GetDate()).Format(time.RFC3339)
+	params["text"] = in.GetText()
+	b, _ := json.Marshal(params)
+
+	i.producer.Input() <- &sarama.ProducerMessage{
+		Topic: config.App.Kafka.DataIncomingTopic,
+		Key:   sarama.StringEncoder("create"),
+		Value: sarama.StringEncoder(b),
 	}
-	return response, nil
+
+	return &pb.ReminderCreateResponse{}, nil
 }
 
 func (i *implementation) ReminderUpdate(ctx context.Context, in *pb.ReminderUpdateRequest) (*pb.ReminderUpdateResponse, error) {
@@ -77,28 +89,31 @@ func (i *implementation) ReminderUpdate(ctx context.Context, in *pb.ReminderUpda
 	if err := reminder.Valid(); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-	response, err := i.dataService.ReminderUpdate(ctx, &pb.ReminderUpdateRequest{
-		Text: in.GetText(),
-		Id:   in.GetId(),
-	})
-	if err != nil {
-		if errors.Is(err, context.DeadlineExceeded) {
-			return nil, status.Error(codes.DeadlineExceeded, err.Error())
-		}
-		return nil, status.Error(codes.Internal, err.Error())
+
+	params := make(map[string]string)
+	params["id"] = strconv.FormatInt(int64(in.GetId()), 10)
+	params["text"] = in.GetText()
+	b, _ := json.Marshal(params)
+
+	i.producer.Input() <- &sarama.ProducerMessage{
+		Topic: config.App.Kafka.DataIncomingTopic,
+		Key:   sarama.StringEncoder("update"),
+		Value: sarama.StringEncoder(b),
 	}
-	return response, nil
+
+	return &pb.ReminderUpdateResponse{}, nil
 }
 
 func (i *implementation) ReminderRemove(ctx context.Context, in *pb.ReminderRemoveRequest) (*pb.ReminderRemoveResponse, error) {
-	response, err := i.dataService.ReminderRemove(ctx, &pb.ReminderRemoveRequest{
-		Id: in.GetId(),
-	})
-	if err != nil {
-		if errors.Is(err, context.DeadlineExceeded) {
-			return nil, status.Error(codes.DeadlineExceeded, err.Error())
-		}
-		return nil, status.Error(codes.Internal, err.Error())
+	params := make(map[string]string)
+	params["id"] = strconv.FormatInt(int64(in.GetId()), 10)
+	b, _ := json.Marshal(params)
+
+	i.producer.Input() <- &sarama.ProducerMessage{
+		Topic: config.App.Kafka.DataIncomingTopic,
+		Key:   sarama.StringEncoder("remove"),
+		Value: sarama.StringEncoder(b),
 	}
-	return response, nil
+
+	return &pb.ReminderRemoveResponse{}, nil
 }

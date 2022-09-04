@@ -5,10 +5,11 @@ package tests
 
 import (
 	"context"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"gitlab.ozon.dev/davidokk/reminder-manager/data-service/pkg/api"
 	"gitlab.ozon.dev/davidokk/reminder-manager/utils"

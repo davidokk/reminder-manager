@@ -16,6 +16,9 @@ func RunBot(client pb.InterfaceClient) {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	go cmd.RunConsumer()
+
 	if err := cmd.Run(); err != nil {
 		log.Fatal(err)
 	}

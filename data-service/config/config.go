@@ -25,6 +25,13 @@ var App struct {
 		Password string `yaml:"password"`
 		DBName   string `yaml:"db-name"`
 	} `yaml:"postgres"`
+	Kafka struct {
+		DataIncomingTopic string   `yaml:"data-incoming-topic"`
+		DataResponseTopic string   `yaml:"data-response-topic"`
+		ConsumerGroupID   string   `yaml:"consumer-group-id"`
+		Brokers           []string `yaml:"brokers"`
+	} `yaml:"kafka"`
+	PprofAddress string `yaml:"pprof-address"`
 }
 
 // ReadConfigs gets app's configs

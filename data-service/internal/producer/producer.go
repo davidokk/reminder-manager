@@ -1,0 +1,32 @@
+package producer
+
+import (
+	"log"
+
+	"github.com/Shopify/sarama"
+	"gitlab.ozon.dev/davidokk/reminder-manager/data-service/config"
+)
+
+// New initialized new sarama.AsyncProducer
+func New(cfg *sarama.Config) sarama.AsyncProducer {
+	cfg.Producer.Return.Successes = true
+
+	asyncProducer, err := sarama.NewAsyncProducer(config.App.Kafka.Brokers, cfg)
+	if err != nil {
+		log.Fatalf("asyn kafka: %v", err)
+	}
+
+	go func() {
+		for msg := range asyncProducer.Errors() {
+			log.Printf("sent error: %s", msg.Error())
+		}
+	}()
+
+	go func() {
+		for res := range asyncProducer.Successes() {
+			log.Printf("sent success: %+v\n", res)
+		}
+	}()
+
+	return asyncProducer
+}
